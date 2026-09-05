@@ -1,0 +1,245 @@
+// Prisma schema — https://pris.ly/d/prisma-schema
+//
+// Conventions here follow Prisma 7's defaults, which differ from Prisma 6:
+//   - The generator is `prisma-client` (not `prisma-client-js`), which emits
+//     real ESM/TypeScript into a path you choose rather than writing into
+//     node_modules. `output` is therefore required.
+//   - The `datasource` block carries no `url`. Connection details live in
+//     prisma7.config.ts, which reads DATABASE_URL from the environment.
+//
+// Run `pnpm db:generate` after editing, then `pnpm db:migrate` to apply.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+
+  // The client only ever runs on the Node server: the VPS deployment is
+  // `next start`, and every query goes through repository functions in
+  // src/lib/db/. Being explicit keeps a stray edge/browser import from
+  // silently pulling in a different runtime build.
+  runtime = "nodejs"
+
+  // The app is ESM (Next 16 + Turbopack), so the generated client should be too.
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Portfolio content
+// ---------------------------------------------------------------------------
+
+/// A skill (language, framework, tool) that appears as a node in the skills
+/// graph and is attached to the projects that use it.
+model Skill {
+  id   String @id @default(cuid())
+  /// URL-safe identifier, also used as the graph node id. Stable across
+  /// renames so the client can keep referring to a node by slug.
+  slug String @unique
+  /// Display name. Latin by design — technology names are not translated
+  /// ("Next.js", "PostgreSQL"), which is also why there is no Persian variant.
+  name String
+
+  category SkillCategory
+
+  /// 1–5. Drives node radius in the graph, so it is a small fixed scale rather
+  /// than a free-form percentage.
+  proficiency Int @default(3)
+
+  /// Optional short Persian note shown when a node is selected.
+  description String?
+
+  /// Hex or CSS colour for the node. Null falls back to a per-category colour
+  /// resolved on the client, so the palette can change without a migration.
+  color String?
+
+  /// Manual ordering within a category; ties broken by name.
+  displayOrder Int @default(0)
+
+  projects ProjectSkill[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // The graph query filters by category and orders by these two.
+  @@index([category, displayOrder])
+}
+
+enum SkillCategory {
+  LANGUAGE
+  FRONTEND
+  BACKEND
+  DATABASE
+  DEVOPS
+  TOOLING
+}
+
+/// A portfolio project. One row per case study, rendered both as a card on the
+/// home page and as a detail page at /projects/[slug].
+model Project {
+  id   String @id @default(cuid())
+  /// Route segment for /projects/[slug]. Unique and immutable once published.
+  slug String @unique
+
+  /// Persian title and copy — this is the reader-facing content.
+  title       String
+  /// One-line summary for cards and the graph tooltip.
+  summary     String
+  /// Long-form Persian description for the detail page. Markdown.
+  description String?
+
+  /// Optional client or employer name. Null for personal projects.
+  client String?
+
+  /// Public URLs. Both optional: not every project ships publicly or is open
+  /// source, and the UI hides whichever is missing.
+  liveUrl String?
+  repoUrl String?
+
+  /// Cover image path under /public, or a remote URL.
+  coverImage String?
+
+  status ProjectStatus @default(PUBLISHED)
+
+  /// Pins a project to the top of the list independently of date.
+  featured Boolean @default(false)
+
+  /// When the work was done, for display and default ordering. Not createdAt —
+  /// a project added to the site today may be two years old.
+  completedAt DateTime?
+
+  /// Manual ordering for equally-featured projects.
+  displayOrder Int @default(0)
+
+  skills ProjectSkill[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Covers the list query: published projects, featured first, then newest.
+  @@index([status, featured, completedAt])
+}
+
+enum ProjectStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+/// Explicit join table between Project and Skill.
+///
+/// Modelled explicitly rather than as an implicit many-to-many for two reasons:
+/// the skills graph traverses this relation in both directions and benefits from
+/// indexes on each side, and an edge carries its own data (`weight`) that an
+/// implicit relation table cannot hold.
+model ProjectSkill {
+  projectId String
+  skillId   String
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  skill   Skill   @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  /// How central this skill was to the project, 1–5. Becomes the edge weight in
+  /// the force simulation, so a primary technology pulls its project closer.
+  weight Int @default(3)
+
+  createdAt DateTime @default(now())
+
+  // Composite primary key: a project cannot list the same skill twice, and no
+  // surrogate id is needed for a pure join row.
+  @@id([projectId, skillId])
+  // Prisma indexes the first key column automatically; skillId needs its own
+  // index for the skill -> projects direction the graph also walks.
+  @@index([skillId])
+}
+
+// ---------------------------------------------------------------------------
+// GitHub stats cache
+// ---------------------------------------------------------------------------
+
+/// Snapshot of GitHub data, written by the scheduled job in
+/// features/github-stats and read by the app.
+///
+/// The app never calls GitHub at request time: no client-facing rate limit, and
+/// the page stays fast (and correct) even when GitHub is down or the job fails.
+///
+/// One row per `key`, updated in place. The design goal is graceful staleness —
+/// `fetchedAt` lets the UI say "updated 12m ago" instead of showing a broken
+/// panel, and a failed refresh leaves the last good `payload` untouched while
+/// recording why in `lastError`.
+model GithubStatsCache {
+  /// Logical cache slot, e.g. "profile", "repos", "contributions". A small
+  /// closed set defined in code, not free-form.
+  key String @id
+
+  /// The cached document. Json rather than columns because each key has a
+  /// different shape and GitHub's responses evolve; the read path validates
+  /// with Zod, so the schema lives in TypeScript where it can be versioned
+  /// without a migration.
+  payload Json
+
+  /// When this payload was successfully fetched. Drives the "updated X ago"
+  /// label and the staleness threshold.
+  fetchedAt DateTime
+
+  /// Advisory hint for the next scheduled run. Not enforced by the DB.
+  nextRefreshAt DateTime?
+
+  /// Message from the most recent failed refresh, cleared on success. Lets the
+  /// job surface a persistent failure without discarding good data.
+  lastError String?
+
+  /// Consecutive failure count, for backoff and for noticing a token that has
+  /// gone bad.
+  failureCount Int @default(0)
+
+  updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Contact
+// ---------------------------------------------------------------------------
+
+/// A contact-form submission.
+///
+/// Persisted before the Resend call, deliberately: if delivery fails the message
+/// is still recorded and `deliveryStatus` says what happened, so a submission is
+/// never silently lost.
+model ContactMessage {
+  id String @id @default(cuid())
+
+  name    String
+  email   String
+  subject String?
+  message String
+
+  deliveryStatus DeliveryStatus @default(PENDING)
+  /// Provider message id, for correlating with Resend's dashboard.
+  providerId     String?
+  /// Why delivery failed, when it did.
+  deliveryError  String?
+
+  /// Request metadata, kept for abuse handling and rate limiting.
+  ///
+  /// `ipHash` is a salted hash rather than the address itself: rate limiting
+  /// only needs to recognise a repeat sender, so storing the raw IP would be
+  /// collecting personal data the feature does not require.
+  ipHash    String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  // Rate limiting asks "how many from this sender recently?" — one index serves
+  // both the IP-based and email-based checks.
+  @@index([ipHash, createdAt])
+  @@index([email, createdAt])
+  @@index([deliveryStatus])
+}
+
+enum DeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+}
