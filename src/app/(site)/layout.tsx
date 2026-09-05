@@ -3,6 +3,7 @@ import { Geist_Mono, Vazirmatn } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 
 import { fa, site } from "@/content/fa";
+import { TerminalDock } from "@/features/terminal/components/terminal-dock";
 import "../globals.css";
 
 /**
@@ -89,6 +90,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             {fa.nav.skipToContent}
           </a>
           {children}
+
+          {/*
+           * Global chrome, mounted once for every route in the group. It is a
+           * Client Component in an otherwise server-rendered layout, which is
+           * fine — only this subtree ships to the browser.
+           */}
+          <TerminalDock />
         </ThemeProvider>
       </body>
     </html>
