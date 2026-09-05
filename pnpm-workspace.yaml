@@ -1,3 +1,11 @@
 allowBuilds:
+  # Prisma's postinstall downloads/places the query engine binary — required.
+  '@prisma/engines': true
+  prisma: true
+  # esbuild's postinstall resolves its platform-specific binary (pulled in by tsx).
+  esbuild: true
   sharp: false
   unrs-resolver: false
+minimumReleaseAgeExclude:
+  - lucide-react@1.41.0
+  - shadcn@4.21.0
