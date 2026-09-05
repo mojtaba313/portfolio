@@ -1,32 +1,59 @@
+import { cacheLife, cacheTag } from "next/cache";
+
+import { ProjectCard } from "@/components/project-card";
+import { Section, SectionPlaceholder } from "@/components/section";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { fa, site } from "@/content/fa";
+import { getProjectCards } from "@/lib/db/projects";
+import { SECTION_IDS } from "@/lib/sections";
 
 /**
- * Step-1 foundation page.
+ * Cached projects grid.
  *
- * This is scaffolding, not the real home page — its only job is to make the
- * things that are expensive to get wrong visible in a browser: RTL flow,
- * Vazirmatn rendering, the light/dark token set, and the LTR terminal island.
- * The real sections replace this once the data layer exists.
+ * `"use cache"` rather than a `<Suspense>` boundary: this content is identical
+ * for every visitor and changes only when the database changes, so caching puts
+ * it in the static shell and the page ships fully rendered. A Suspense boundary
+ * would stream a skeleton on every request for no benefit.
  *
- * Note there is no `"use cache"` here and none is needed: the page reads no
- * data, so with Cache Components enabled it prerenders to a static shell on its
- * own. The build output confirms this — the route is marked `○ (Static)`.
+ * `cacheTag` gives a handle for targeted invalidation — an admin action or a
+ * deploy hook can call `revalidateTag("projects")` instead of waiting out the
+ * lifetime.
  */
+async function ProjectsGrid() {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("projects");
+
+  const projects = await getProjectCards();
+
+  if (projects.length === 0) {
+    return <SectionPlaceholder note={fa.home.projectsEmpty} />;
+  }
+
+  return (
+    <ul className="grid gap-4 sm:grid-cols-2">
+      {projects.map((project) => (
+        <li key={project.slug} className="flex">
+          <ProjectCard project={project} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export default function Home() {
   return (
-    <main id="main" className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
-      {/* `justify-between` + logical padding means this header flips correctly
-          under dir="rtl" without any per-side overrides. */}
-      <header className="mb-16 flex items-center justify-between gap-4">
-        <span className="text-muted-foreground font-mono text-sm">
+    <main id="main" className="mx-auto w-full max-w-4xl flex-1 px-6 pb-24">
+      <header className="flex items-center justify-between gap-4 py-6">
+        <span className="text-muted-foreground font-mono text-sm" dir="ltr">
           {site.url.replace(/^https?:\/\//, "")}
         </span>
         <ThemeToggle />
       </header>
 
-      <section className="space-y-4">
+      {/* Hero — static content, so it prerenders with no cache directive. */}
+      <section className="space-y-5 py-12">
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
           {site.name}
         </h1>
@@ -34,62 +61,60 @@ export default function Home() {
         <p className="text-muted-foreground max-w-prose text-balance">
           {site.tagline}
         </p>
-      </section>
 
-      <hr className="border-border my-12" />
+        <div className="flex flex-wrap items-center gap-3 pt-2">
+          <Button size="lg" asChild>
+            {/* Plain anchors, not <Link>: these are in-page fragments on the
+                current route, so client-side routing has nothing to do. */}
+            <a href={`#${SECTION_IDS.projects}`}>{fa.home.heroCtaProjects}</a>
+          </Button>
+          <Button size="lg" variant="outline" asChild>
+            <a href={`#${SECTION_IDS.contact}`}>{fa.home.heroCtaContact}</a>
+          </Button>
+        </div>
 
-      <section className="space-y-4">
-        <h2 className="text-2xl font-semibold">{fa.scaffold.heading}</h2>
-        <p className="text-muted-foreground max-w-prose">{fa.scaffold.body}</p>
-      </section>
-
-      <section className="mt-12 space-y-3">
-        <h3 className="text-muted-foreground text-sm font-medium">
-          {fa.scaffold.islandLabel}
-        </h3>
-
-        {/*
-         * The LTR island. Three attributes do the work and all three matter:
-         *   dir="ltr"  — flips direction for this subtree only.
-         *   lang="en"  — stops the browser from applying Persian digit shaping
-         *                or Persian font fallback inside the box.
-         *   ltr-island — the custom utility in globals.css: bidi isolation,
-         *                the Latin mono stack, and tabular lining figures.
-         */}
-        <pre
-          dir="ltr"
-          lang="en"
-          className="ltr-island bg-muted/50 border-border overflow-x-auto rounded-lg border p-4 text-sm"
-        >
-          {`$ whoami
-${site.name.toLowerCase()} — full-stack developer
-
-$ node --version
-v24.16.0
-
-$ echo "digits stay Latin: 0123456789"
-digits stay Latin: 0123456789`}
-        </pre>
-
-        <p className="text-muted-foreground max-w-prose text-sm">
-          {fa.scaffold.islandNote}
+        <p className="text-muted-foreground pt-2 text-xs">
+          {fa.home.heroTerminalHint}
         </p>
       </section>
 
-      <section className="mt-12 space-y-3">
-        <h3 className="text-muted-foreground text-sm font-medium">
-          {fa.scaffold.buttonsLabel}
-        </h3>
-        <div className="flex flex-wrap items-center gap-3">
-          <Button size="lg">{fa.scaffold.primaryCta}</Button>
-          <Button size="lg" variant="outline">
-            {fa.scaffold.secondaryCta}
-          </Button>
-          <Button size="lg" variant="ghost">
-            {fa.nav.skills}
-          </Button>
-        </div>
-      </section>
+      <Section
+        id={SECTION_IDS.projects}
+        title={fa.home.projectsTitle}
+        subtitle={fa.home.projectsSubtitle}
+      >
+        <ProjectsGrid />
+      </Section>
+
+      {/*
+       * The remaining sections are anchors first and features second. Having the
+       * ids in the document now means `skills --graph` and `github --stats`
+       * already scroll somewhere, and each feature drops in behind its
+       * placeholder without the terminal commands changing.
+       */}
+      <Section
+        id={SECTION_IDS.skills}
+        title={fa.home.skillsTitle}
+        subtitle={fa.home.skillsSubtitle}
+      >
+        <SectionPlaceholder note={fa.home.comingSoon} />
+      </Section>
+
+      <Section
+        id={SECTION_IDS.github}
+        title={fa.home.githubTitle}
+        subtitle={fa.home.githubSubtitle}
+      >
+        <SectionPlaceholder note={fa.home.comingSoon} />
+      </Section>
+
+      <Section
+        id={SECTION_IDS.contact}
+        title={fa.home.contactTitle}
+        subtitle={fa.home.contactSubtitle}
+      >
+        <SectionPlaceholder note={fa.home.comingSoon} />
+      </Section>
     </main>
   );
 }

@@ -155,6 +155,23 @@ export async function getPublishedProjectSlugs(): Promise<string[]> {
 }
 
 /**
+ * Slug plus last-modified time for each published project, for the sitemap.
+ *
+ * `updatedAt` rather than `completedAt`: a crawler wants to know when the *page*
+ * last changed, not when the work was finished. Editing a two-year-old case
+ * study should still refresh its sitemap entry.
+ */
+export async function getProjectSitemapEntries(): Promise<
+  { slug: string; updatedAt: Date }[]
+> {
+  return prisma.project.findMany({
+    where: { status: "PUBLISHED" },
+    orderBy: { updatedAt: "desc" },
+    select: { slug: true, updatedAt: true },
+  });
+}
+
+/**
  * Nodes and edges for the skills graph.
  *
  * Two queries in parallel rather than one nested read: the graph needs skills
@@ -180,4 +197,58 @@ export async function getGraphData(): Promise<GraphData> {
   ]);
 
   return { skills, projects };
+}
+
+/** A project card, with its top skills already resolved to names and colours. */
+export type ProjectCardRow = {
+  slug: string;
+  title: string;
+  summary: string;
+  featured: boolean;
+  completedAt: Date | null;
+  skills: { slug: string; name: string; color: string | null }[];
+};
+
+/**
+ * Projects for the home page grid.
+ *
+ * Distinct from `getPublishedProjects` (which returns bare skill ids for the
+ * graph) because a card needs names and colours to render. Resolving the join in
+ * SQL keeps that out of the component, which would otherwise need the full skill
+ * list just to label three badges.
+ *
+ * `take` caps the badges per card: a project with ten technologies would
+ * otherwise wrap into a wall of pills and flatten the visual hierarchy of the
+ * grid. Ordered by weight, so the ones shown are the ones that mattered most.
+ */
+export async function getProjectCards(
+  skillsPerCard = 4,
+): Promise<ProjectCardRow[]> {
+  const rows = await prisma.project.findMany({
+    where: { status: "PUBLISHED" },
+    orderBy: [
+      { featured: "desc" },
+      { completedAt: "desc" },
+      { displayOrder: "asc" },
+    ],
+    select: {
+      slug: true,
+      title: true,
+      summary: true,
+      featured: true,
+      completedAt: true,
+      skills: {
+        orderBy: { weight: "desc" },
+        take: skillsPerCard,
+        select: {
+          skill: { select: { slug: true, name: true, color: true } },
+        },
+      },
+    },
+  });
+
+  return rows.map(({ skills, ...project }) => ({
+    ...project,
+    skills: skills.map((edge) => edge.skill),
+  }));
 }

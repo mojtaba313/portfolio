@@ -66,26 +66,47 @@ export const fa = {
     shortcutHint: "برای باز و بسته کردن، Ctrl و ` را با هم بزنید",
   },
 
+  /**
+   * Home page sections.
+   */
+  home: {
+    heroCtaProjects: "دیدن پروژه‌ها",
+    heroCtaContact: "تماس با من",
+    heroTerminalHint: "برای باز کردن ترمینال، Ctrl و ` را بزنید",
+    projectsTitle: "پروژه‌ها",
+    projectsSubtitle: "چند نمونه از کارهایی که ساخته‌ام.",
+    projectsEmpty: "هنوز پروژه‌ای منتشر نشده است.",
+    skillsTitle: "گراف مهارت‌ها",
+    skillsSubtitle:
+      "نقشهٔ تعاملی مهارت‌ها و پروژه‌هایی که در آن‌ها به کار رفته‌اند.",
+    githubTitle: "فعالیت گیت‌هاب",
+    githubSubtitle: "آمار مخازن و مشارکت‌ها، به‌روزرسانی‌شده به‌صورت زمان‌بندی‌شده.",
+    contactTitle: "تماس",
+    contactSubtitle: "برای همکاری یا پیشنهاد شغلی پیام بدهید.",
+    comingSoon: "این بخش در مرحلهٔ بعدی ساخته می‌شود.",
+  },
+
+  project: {
+    /** Verb-led so it reads naturally next to a project title. */
+    viewLive: "مشاهدهٔ سایت",
+    viewRepo: "کد منبع",
+    backToProjects: "بازگشت به پروژه‌ها",
+    client: "کارفرما",
+    completedAt: "تاریخ انجام",
+    skillsUsed: "فناوری‌های به‌کاررفته",
+    featured: "شاخص",
+    notFoundTitle: "پروژه پیدا نشد",
+    notFoundBody: "این نشانی به هیچ پروژهٔ منتشرشده‌ای مربوط نیست.",
+  },
+
   common: {
     loading: "در حال بارگذاری…",
     error: "خطایی رخ داد",
     retry: "تلاش دوباره",
-  },
-
-  /**
-   * Scaffold-only copy for the step-1 foundation page. This whole section goes
-   * away when the real home page sections land — it exists so the RTL, theme
-   * and LTR-island behaviour is visible in a browser before any feature is
-   * built on top of it.
-   */
-  scaffold: {
-    heading: "پایهٔ پروژه آماده است",
-    body: "چیدمان راست‌به‌چپ، قلم وزیرمتن، پوستهٔ روشن و تاریک، و جزیرهٔ چپ‌به‌راست همه فعال‌اند. بخش‌های اصلی سایت در مرحله‌های بعدی ساخته می‌شوند.",
-    islandLabel: "نمونهٔ خروجی ترمینال (همیشه انگلیسی و چپ‌به‌راست)",
-    islandNote:
-      "این جعبه داخل یک صفحهٔ راست‌به‌چپ است، ولی جهت و قلم خودش را نگه می‌دارد و رقم‌ها لاتین می‌مانند.",
-    buttonsLabel: "دکمه‌های shadcn",
-    primaryCta: "دیدن پروژه‌ها",
-    secondaryCta: "تماس با من",
+    /** Shown by the route error boundary — deliberately non-technical. */
+    errorTitle: "مشکلی پیش آمد",
+    errorBody:
+      "این بخش موقتاً در دسترس نیست. چند لحظه بعد دوباره تلاش کنید یا به صفحهٔ اصلی برگردید.",
+    backHome: "بازگشت به صفحهٔ اصلی",
   },
 } as const;
