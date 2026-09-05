@@ -5,6 +5,7 @@ import { Section, SectionPlaceholder } from "@/components/section";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { fa, site } from "@/content/fa";
+import { ContactForm } from "@/features/contact/components/contact-form";
 import { getProjectCards } from "@/lib/db/projects";
 import { SECTION_IDS } from "@/lib/sections";
 
@@ -113,7 +114,7 @@ export default function Home() {
         title={fa.home.contactTitle}
         subtitle={fa.home.contactSubtitle}
       >
-        <SectionPlaceholder note={fa.home.comingSoon} />
+        <ContactForm />
       </Section>
     </main>
   );

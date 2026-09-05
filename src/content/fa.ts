@@ -99,6 +99,16 @@ export const fa = {
     notFoundBody: "این نشانی به هیچ پروژهٔ منتشرشده‌ای مربوط نیست.",
   },
 
+  contact: {
+    name: "نام",
+    email: "ایمیل",
+    subject: "موضوع",
+    message: "پیام",
+    submit: "ارسال پیام",
+    sending: "در حال ارسال…",
+    success: "پیام شما ارسال شد. به‌زودی پاسخ می‌دهم.",
+  },
+
   common: {
     loading: "در حال بارگذاری…",
     error: "خطایی رخ داد",
