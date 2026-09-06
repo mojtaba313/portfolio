@@ -1,0 +1,50 @@
+[Unit]
+Description=Portfolio Next.js app
+Documentation=https://github.com/mojtaba/portfolio
+# The app reads Postgres during startup (and at build time), so there is no
+# point starting before the database is reachable.
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+# Adjust to match the deployment.
+User=portfolio
+Group=portfolio
+WorkingDirectory=/srv/portfolio
+
+# Production secrets and build-baked public values live here, not in this unit
+# file: unit files are world-readable. Keep it chmod 600, owned by the service
+# user. Required keys: DATABASE_URL, NEXT_PUBLIC_SITE_URL, RESEND_API_KEY,
+# CONTACT_FROM_EMAIL, CONTACT_TO_EMAIL, CONTACT_IP_SALT, GITHUB_TOKEN,
+# GITHUB_USERNAME. PORT is optional (defaults to 3000).
+EnvironmentFile=/srv/portfolio/.env
+Environment=PORT=3000
+
+# Absolute-binary problem, same as the stats job: systemd runs with a minimal
+# PATH, so resolve pnpm via env. `pnpm start` runs `next start`, which serves
+# the .next output of `pnpm build` — never `next dev`.
+ExecStart=/usr/bin/env pnpm start
+
+Restart=on-failure
+RestartSec=5
+
+StandardOutput=journal
+StandardError=journal
+
+# --- Hardening -------------------------------------------------------------
+# Same posture as the stats job. ReadWritePaths covers the whole tree because
+# `next start` writes ISR cache data under .next at runtime.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/portfolio
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=false

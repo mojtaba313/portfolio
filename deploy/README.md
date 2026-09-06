@@ -2,6 +2,32 @@
 
 Self-hosted on an Ubuntu VPS behind nginx. No serverless, no Vercel.
 
+## App
+
+```bash
+sudo cp deploy/systemd/portfolio-app.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now portfolio-app.service
+```
+
+Or run `deploy/deploy.sh` from `/srv/portfolio`, which pulls, installs with
+`--frozen-lockfile`, migrates, builds and restarts in the order below.
+
+### Order matters
+
+1. `.env` holds **production** values first — especially `NEXT_PUBLIC_SITE_URL`.
+2. `pnpm db:deploy` (never `migrate dev` outside development).
+3. `pnpm build`.
+4. Restart the service.
+
+The build prerenders pages by querying Postgres, so the tables must exist before
+it runs — and `NEXT_PUBLIC_SITE_URL` is baked into the sitemap and metadata at
+build time. Building against `localhost:3000` silently ships localhost URLs, so
+step 1 is not optional.
+
+`next start` needs `.next` writable at runtime (ISR writes), which is why the
+unit's `ReadWritePaths` covers the tree rather than carving out a subpath.
+
 ## GitHub stats refresh
 
 GitHub is never called from a request path. A systemd timer runs a script that

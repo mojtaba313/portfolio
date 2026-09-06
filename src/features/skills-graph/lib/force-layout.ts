@@ -11,6 +11,23 @@ import {
 
 import type { GraphData } from "@/lib/db/projects";
 
+import { CATEGORY_COLORS, PROJECT_NODE_COLOR } from "./graph-theme";
+
+const FALLBACK_NODE_COLOR = "#737373";
+
+/** Node radius from proficiency 1–5: 9.5px for a novice skill, 19.5px at mastery. */
+function skillRadius(proficiency: number): number {
+  return 7 + proficiency * 2.5;
+}
+
+/**
+ * Project radius from connected-skill count, capped so a project linked to many
+ * skills does not swallow its neighbours.
+ */
+function projectRadius(skillCount: number): number {
+  return 9 + Math.min(skillCount, 8);
+}
+
 /**
  * Force-layout model for the skills graph.
  *
@@ -38,76 +55,6 @@ export interface GraphNode extends SimulationNodeDatum {
 export interface GraphLink extends SimulationLinkDatum<GraphNode> {
   /** Normalised 0–1 from the join-table weight; stronger edges pull tighter. */
   strength: number;
-}
-
-/**
- * Fallback category palette, used only when the theme tokens cannot be read.
- *
- * The live palette is `--category-*` in globals.css, resolved per mode by
- * `resolveCategoryPalette()` below so canvas nodes follow light/dark and any
- * future palette change with no code touched here. This map stays as the
- * fallback for non-DOM contexts (tests, SSR) and as documentation of which
- * categories exist. Nothing else in the app may import it.
- */
-export const CATEGORY_COLORS: Record<string, string> = {
-  LANGUAGE: "#3178c6",
-  FRONTEND: "#38bdf8",
-  BACKEND: "#5fa04e",
-  DATABASE: "#4169e1",
-  DEVOPS: "#e95420",
-  TOOLING: "#f05033",
-};
-
-const CATEGORY_KEYS = [
-  "LANGUAGE",
-  "FRONTEND",
-  "BACKEND",
-  "DATABASE",
-  "DEVOPS",
-  "TOOLING",
-] as const;
-
-/**
- * Reads the live `--category-*` tokens from the document.
- *
- * Canvas cannot consume Tailwind classes, so this bridges the theme into
- * concrete colour strings. `oklch()` values work directly as canvas fill
- * styles in all modern browsers. Falls back to CATEGORY_COLORS when there is
- * no document (SSR, tests) or a token is missing, so a partial theme can never
- * produce an invisible node.
- */
-export function resolveCategoryPalette(): Record<string, string> {
-  const palette: Record<string, string> = { ...CATEGORY_COLORS };
-
-  if (typeof document === "undefined") return palette;
-
-  const styles = getComputedStyle(document.documentElement);
-  for (const key of CATEGORY_KEYS) {
-    const value = styles
-      .getPropertyValue(`--category-${key.toLowerCase()}`)
-      .trim();
-    if (value) palette[key] = value;
-  }
-
-  return palette;
-}
-
-/** Project nodes stay neutral so the coloured skill nodes carry the meaning. */
-export const PROJECT_NODE_COLOR = "#a3a3a3";
-
-const FALLBACK_NODE_COLOR = "#737373";
-
-/** Node radius from proficiency 1–5: 9.5px for a novice skill, 19.5px at mastery. */
-function skillRadius(proficiency: number): number {
-  return 7 + proficiency * 2.5;
-}
-
-/**
- * Project radius from connected-skill count, capped so a project linked to many
- * skills does not swallow its neighbours.
- */
-function projectRadius(skillCount: number): number {
-  return 9 + Math.min(skillCount, 8);
 }
 
 export function buildGraph(

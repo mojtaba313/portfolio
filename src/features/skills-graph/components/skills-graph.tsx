@@ -9,7 +9,7 @@ import { SectionPlaceholder } from "@/components/section";
 import { fa } from "@/content/fa";
 import type { GraphData } from "@/lib/db/projects";
 
-import { PROJECT_NODE_COLOR } from "../lib/force-layout";
+import { PROJECT_NODE_COLOR } from "../lib/graph-theme";
 
 /*
  * Full class strings, not interpolations: Tailwind generates utilities by

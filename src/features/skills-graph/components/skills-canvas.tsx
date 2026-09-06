@@ -11,11 +11,11 @@ import { forceCenter } from "d3-force";
 import {
   buildGraph,
   createSimulation,
-  resolveCategoryPalette,
   settleSimulation,
   type GraphLink,
   type GraphNode,
 } from "../lib/force-layout";
+import { resolveCategoryPalette } from "../lib/graph-theme";
 
 /** Canvas height in CSS pixels. Width always follows the container. */
 const CANVAS_HEIGHT = 440;
@@ -385,12 +385,59 @@ export function SkillsCanvas({
       setSelected(null);
       return;
     }
+    activateNode(node);
+  };
+
+  /** Shared by mouse click and keyboard Enter: one activation path. */
+  const activateNode = (node: GraphNode) => {
     if (node.kind === "project" && node.url) {
       router.push(node.url);
       return;
     }
-    // Tapping the selected skill again deselects it.
+    // Activating the selected skill again deselects it.
     setSelected(selectedRef.current === node.id ? null : node.id);
+  };
+
+  /*
+   * Keyboard operation for the canvas. Drives the same hovered channel the
+   * pointer uses, so highlight rendering, the status line and activation are
+   * all shared rather than reimplemented — keyboard focus IS the highlight.
+   * Enabled in static (reduced-motion) mode too: highlighting is an instant
+   * state change, not motion.
+   */
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLCanvasElement>) => {
+    const order = nodesRef.current;
+    if (order.length === 0) return;
+
+    if (
+      event.key === "ArrowRight" ||
+      event.key === "ArrowDown" ||
+      event.key === "ArrowLeft" ||
+      event.key === "ArrowUp"
+    ) {
+      // Prevent page scroll: arrows belong to the graph while it is focused.
+      event.preventDefault();
+      const direction =
+        event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : -1;
+      const current = order.findIndex(
+        (node) => node.id === hoveredRef.current,
+      );
+      const next = order[(current + direction + order.length) % order.length]!;
+      setHovered(next.id);
+      return;
+    }
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      const node = order.find((entry) => entry.id === hoveredRef.current);
+      if (node) activateNode(node);
+      return;
+    }
+
+    if (event.key === "Escape") {
+      setHovered(null);
+      setSelected(null);
+    }
   };
 
   return (
@@ -399,14 +446,16 @@ export function SkillsCanvas({
         <canvas
           ref={canvasRef}
           role="img"
-          aria-label={fa.skills.canvasLabel(
+          tabIndex={0}
+          aria-label={`${fa.skills.canvasLabel(
             data.skills.length.toLocaleString("fa-IR"),
             data.projects.length.toLocaleString("fa-IR"),
-          )}
+          )}. ${fa.skills.canvasKeys}`}
           onPointerMove={staticLayout ? undefined : handlePointerMove}
           onPointerLeave={staticLayout ? undefined : handlePointerLeave}
           onClick={staticLayout ? undefined : handleClick}
-          className="block w-full touch-manipulation"
+          onKeyDown={handleKeyDown}
+          className="block w-full touch-manipulation focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none rounded-xl"
           style={{ height: `${CANVAS_HEIGHT}px` }}
         />
       </div>

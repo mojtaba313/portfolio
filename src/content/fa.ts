@@ -123,6 +123,9 @@ export const fa = {
     /** aria-label for the canvas as a whole. */
     canvasLabel: (skills: string, projects: string) =>
       `گراف تعاملی مهارت‌ها: ${skills} مهارت و ${projects} پروژه`,
+    /** Keyboard instructions, appended to the canvas label. */
+    canvasKeys:
+      "با کلیدهای جهت‌دار بین گره‌ها حرکت کنید، با Enter باز کنید، با Escape رها کنید.",
   },
 
   github: {
