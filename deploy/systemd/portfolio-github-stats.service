@@ -1,0 +1,51 @@
+[Unit]
+Description=Refresh cached GitHub stats for the portfolio site
+Documentation=https://github.com/mojtaba/portfolio
+# The job's only job is writing to Postgres, so there is no point starting
+# before the database is reachable.
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+
+# Adjust to match the deployment.
+User=portfolio
+Group=portfolio
+WorkingDirectory=/srv/portfolio
+
+# DATABASE_URL, GITHUB_TOKEN and GITHUB_USERNAME live here rather than in this
+# unit file: systemd unit files are world-readable, environment files are not.
+# Keep it chmod 600 and owned by the service user.
+EnvironmentFile=/srv/portfolio/.env
+
+# Absolute paths. systemd runs with a minimal PATH, so `pnpm` alone will not
+# resolve; `which pnpm` on the server gives the right value.
+ExecStart=/usr/bin/env pnpm github:refresh
+
+# A refresh that has not finished in two minutes is stuck, not slow — the client
+# already times out individual requests after 15 seconds.
+TimeoutStartSec=120
+
+# The script exits 1 when any cache key fails, which is deliberate: it makes
+# `systemctl status` and the journal meaningful instead of always green.
+# Failures are not fatal to the site, since the previous payload is preserved.
+StandardOutput=journal
+StandardError=journal
+
+# --- Hardening -------------------------------------------------------------
+# The job needs outbound HTTPS and a Postgres socket. Nothing else, so nothing
+# else is granted.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+# The working directory must stay writable: pnpm and Next both touch caches there.
+ReadWritePaths=/srv/portfolio
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=false

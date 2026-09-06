@@ -109,6 +109,27 @@ export const fa = {
     success: "پیام شما ارسال شد. به‌زودی پاسخ می‌دهم.",
   },
 
+  github: {
+    stars: "ستاره",
+    forks: "فورک",
+    repos: "مخزن عمومی",
+    followers: "دنبال‌کننده",
+    topRepos: "پرستاره‌ترین مخزن‌ها",
+    recentActivity: "آخرین فعالیت",
+    /** Interpolated rather than concatenated so the sentence stays natural. */
+    contributionsTotal: (count: string) => `${count} مشارکت در یک سال گذشته`,
+    heatmapLabel: (count: string) =>
+      `نمودار مشارکت‌های یک سال گذشته، در کل ${count} مشارکت`,
+    legendLess: "کمتر",
+    legendMore: "بیشتر",
+    updatedAt: (relative: string) => `به‌روزرسانی ${relative}`,
+    /** Shown when the cache is older than the staleness threshold. */
+    staleNote: "داده‌ها به‌تازگی به‌روز نشده‌اند؛ آخرین مقدار موجود نشان داده می‌شود.",
+    /** Shown when the job has never completed successfully. */
+    empty: "آمار گیت‌هاب هنوز در دسترس نیست.",
+    viewProfile: "دیدن نمایهٔ گیت‌هاب",
+  },
+
   common: {
     loading: "در حال بارگذاری…",
     error: "خطایی رخ داد",

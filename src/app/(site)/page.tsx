@@ -6,6 +6,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { fa, site } from "@/content/fa";
 import { ContactForm } from "@/features/contact/components/contact-form";
+import { GithubStats } from "@/features/github-stats/components/github-stats";
 import { getProjectCards } from "@/lib/db/projects";
 import { SECTION_IDS } from "@/lib/sections";
 
@@ -41,6 +42,37 @@ async function ProjectsGrid() {
       ))}
     </ul>
   );
+}
+
+/**
+ * Cached GitHub panel.
+ *
+ * `"use cache"` on top of a cache that already lives in Postgres is not
+ * redundant: without it this database read is uncached data at request time, so
+ * the route could not prerender and every visitor would pay a query. The two
+ * layers answer different questions — Postgres holds data GitHub is slow to give
+ * us, this holds rendered output the page is otherwise blocked on.
+ *
+ * The lifetime is shorter than the projects grid because the underlying job
+ * refreshes every 20 minutes; caching for hours would make the "updated X ago"
+ * label lie.
+ */
+async function CachedGithubStats() {
+  "use cache";
+  /*
+   * Tuned to the job rather than borrowed from a named profile. The refresh
+   * timer runs every 20 minutes, so revalidating faster than that just re-reads
+   * Postgres for a payload that has not changed, while revalidating much slower
+   * would make the "updated X ago" label understate the real age.
+   *
+   * `expire` is generous on purpose: if the app cannot revalidate, serving a
+   * two-hour-old panel beats serving none, and the label tells the truth about
+   * its age either way.
+   */
+  cacheLife({ stale: 300, revalidate: 1200, expire: 7200 });
+  cacheTag("github-stats");
+
+  return <GithubStats />;
 }
 
 export default function Home() {
@@ -106,7 +138,7 @@ export default function Home() {
         title={fa.home.githubTitle}
         subtitle={fa.home.githubSubtitle}
       >
-        <SectionPlaceholder note={fa.home.comingSoon} />
+        <CachedGithubStats />
       </Section>
 
       <Section

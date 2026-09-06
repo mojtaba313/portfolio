@@ -14,7 +14,8 @@
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.mts",
     "db:reset": "prisma migrate reset",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "github:refresh": "tsx scripts/refresh-github-stats.mts"
   },
   "dependencies": {
     "@hookform/resolvers": "5.9.1",

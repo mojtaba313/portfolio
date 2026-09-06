@@ -1,0 +1,26 @@
+[Unit]
+Description=Run the GitHub stats refresh every 20 minutes
+Documentation=https://github.com/mojtaba/portfolio
+
+[Timer]
+# First run shortly after boot, so a reboot does not leave the cache stale for a
+# full interval.
+OnBootSec=2min
+
+# Every 20 minutes thereafter. Well inside GitHub's rate limits: three requests
+# per run is ~9/hour against a 5,000/hour authenticated budget.
+OnUnitActiveSec=20min
+
+# Spreads the trigger across a 2-minute window. Without it, every timer with the
+# same interval fires on the same wall-clock boundary, which is exactly when a
+# small VPS is least able to absorb the work.
+RandomizedDelaySec=2min
+
+# Runs a missed cycle on the next boot instead of waiting for the next interval,
+# so the cache recovers on its own after downtime.
+Persistent=true
+
+Unit=portfolio-github-stats.service
+
+[Install]
+WantedBy=timers.target
