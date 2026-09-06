@@ -88,12 +88,16 @@ export function ContactForm() {
       {/*
        * Honeypot. Hidden from sight and from assistive tech, and excluded from
        * the tab order, so no real user can reach it — while a bot that fills
-       * every input gets rejected by the schema.
+       * every input gets rejected server-side.
        *
-       * Positioned off-screen rather than `display: none`, since some bots skip
-       * fields that are not rendered.
+       * `sr-only` rather than an off-screen offset like `-left-[9999px]`. That
+       * offset was the cause of a real bug: absolutely positioned content that
+       * far left creates leftward scrollable overflow, and on this RTL document
+       * Chrome makes that scrollable — a ~10000px horizontal scrollbar on every
+       * page with the form. `sr-only` is clip-based rather than `display: none`,
+       * so naive bots still see a rendered field, with zero layout impact.
        */}
-      <div aria-hidden className="pointer-events-none absolute -left-[9999px]">
+      <div aria-hidden className="sr-only">
         <label htmlFor="botField">Leave this empty</label>
         <input
           id="botField"

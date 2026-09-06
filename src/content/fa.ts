@@ -109,6 +109,22 @@ export const fa = {
     success: "پیام شما ارسال شد. به‌زودی پاسخ می‌دهم.",
   },
 
+  skills: {
+    /** Rendered above the canvas as the interaction hint. */
+    hint: "روی یک مهارت بزنید تا پروژه‌های مرتبط برجسته شود؛ روی یک پروژه بزنید تا صفحه‌اش باز شود.",
+    legendSkill: "مهارت",
+    legendProject: "پروژه",
+    loading: "در حال آماده‌سازی گراف…",
+    empty: "هنوز داده‌ای برای نمایش گراف وجود ندارد.",
+    /** Status line under the canvas when a skill is selected. */
+    selectedSkill: (name: string, count: string) =>
+      `${name} در ${count} پروژه به کار رفته است`,
+    selectedProject: (title: string) => `${title} — برای باز شدن بزنید`,
+    /** aria-label for the canvas as a whole. */
+    canvasLabel: (skills: string, projects: string) =>
+      `گراف تعاملی مهارت‌ها: ${skills} مهارت و ${projects} پروژه`,
+  },
+
   github: {
     stars: "ستاره",
     forks: "فورک",

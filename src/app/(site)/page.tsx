@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { fa, site } from "@/content/fa";
 import { ContactForm } from "@/features/contact/components/contact-form";
 import { GithubStats } from "@/features/github-stats/components/github-stats";
-import { getProjectCards } from "@/lib/db/projects";
+import { SkillsGraph } from "@/features/skills-graph/components/skills-graph";
+import { getGraphData, getProjectCards } from "@/lib/db/projects";
 import { SECTION_IDS } from "@/lib/sections";
 
 /**
@@ -57,6 +58,23 @@ async function ProjectsGrid() {
  * refreshes every 20 minutes; caching for hours would make the "updated X ago"
  * label lie.
  */
+/**
+ * Cached skills graph data.
+ *
+ * Same pattern as the projects grid: identical for every visitor, changing only
+ * when the database changes, so it belongs in the static shell. The graph
+ * *itself* stays fully client-side — what crosses the server boundary is just
+ * the node and edge lists, which the canvas component feeds to d3-force.
+ */
+async function CachedSkillsGraph() {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("skills");
+
+  const graph = await getGraphData();
+  return <SkillsGraph data={graph} />;
+}
+
 async function CachedGithubStats() {
   "use cache";
   /*
@@ -130,7 +148,7 @@ export default function Home() {
         title={fa.home.skillsTitle}
         subtitle={fa.home.skillsSubtitle}
       >
-        <SectionPlaceholder note={fa.home.comingSoon} />
+        <CachedSkillsGraph />
       </Section>
 
       <Section
