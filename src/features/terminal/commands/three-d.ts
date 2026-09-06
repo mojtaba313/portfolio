@@ -30,12 +30,5 @@ export const threeDCommand: Command = {
       kind: "output",
       text: `3D background ${next ? "enabled" : "disabled"}.`,
     });
-
-    // Honest about the current state of the build rather than implying the
-    // toggle did something visible. Removed in step 8.
-    ctx.print({
-      kind: "muted",
-      text: "Note: the scene itself is not implemented yet — this only sets the flag.",
-    });
   },
 };

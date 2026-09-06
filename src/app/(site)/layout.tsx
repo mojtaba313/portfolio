@@ -3,6 +3,8 @@ import { Geist_Mono, Vazirmatn } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 
 import { fa, site } from "@/content/fa";
+import { SceneBackground } from "@/features/scene-3d/components/scene-background";
+import { ScrollAnimationsLoader } from "@/features/scroll-animations/components/scroll-animations-loader";
 import { TerminalDock } from "@/features/terminal/components/terminal-dock";
 import "../globals.css";
 
@@ -92,10 +94,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           {children}
 
           {/*
-           * Global chrome, mounted once for every route in the group. It is a
+           * Global chrome, mounted once for every route in the group. Each is a
            * Client Component in an otherwise server-rendered layout, which is
-           * fine — only this subtree ships to the browser.
+           * fine — only these subtrees ship to the browser, and the heavy
+           * libraries behind them (three.js, GSAP) stay in dynamic chunks that
+           * never join the initial payload.
            */}
+          <SceneBackground />
+          <ScrollAnimationsLoader />
           <TerminalDock />
         </ThemeProvider>
       </body>

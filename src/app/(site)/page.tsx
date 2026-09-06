@@ -37,7 +37,7 @@ async function ProjectsGrid() {
   return (
     <ul className="grid gap-4 sm:grid-cols-2">
       {projects.map((project) => (
-        <li key={project.slug} className="flex">
+        <li key={project.slug} data-reveal className="flex">
           <ProjectCard project={project} />
         </li>
       ))}
@@ -103,17 +103,21 @@ export default function Home() {
         <ThemeToggle />
       </header>
 
-      {/* Hero — static content, so it prerenders with no cache directive. */}
+      {/* Hero — static content, so it prerenders with no cache directive. The
+          entrance is CSS-only: a GSAP hero would cost first paint, and the
+          reduced-motion fallback comes free from the global rule. */}
       <section className="space-y-5 py-12">
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+        <h1 className="hero-rise text-4xl font-bold tracking-tight sm:text-5xl">
           {site.name}
         </h1>
-        <p className="text-primary text-lg font-medium">{site.role}</p>
-        <p className="text-muted-foreground max-w-prose text-balance">
+        <p className="hero-rise hero-delay-1 text-primary text-lg font-medium">
+          {site.role}
+        </p>
+        <p className="hero-rise hero-delay-2 text-muted-foreground max-w-prose text-balance">
           {site.tagline}
         </p>
 
-        <div className="flex flex-wrap items-center gap-3 pt-2">
+        <div className="hero-rise hero-delay-3 flex flex-wrap items-center gap-3 pt-2">
           <Button size="lg" asChild>
             {/* Plain anchors, not <Link>: these are in-page fragments on the
                 current route, so client-side routing has nothing to do. */}
@@ -124,7 +128,7 @@ export default function Home() {
           </Button>
         </div>
 
-        <p className="text-muted-foreground pt-2 text-xs">
+        <p className="hero-rise hero-delay-4 text-muted-foreground pt-2 text-xs">
           {fa.home.heroTerminalHint}
         </p>
       </section>
@@ -156,7 +160,11 @@ export default function Home() {
         title={fa.home.githubTitle}
         subtitle={fa.home.githubSubtitle}
       >
-        <CachedGithubStats />
+        {/* Plain wrapper: the reveal animation targets this div so the feature
+            component itself stays unaware of the animation layer. */}
+        <div data-reveal>
+          <CachedGithubStats />
+        </div>
       </Section>
 
       <Section
@@ -164,7 +172,9 @@ export default function Home() {
         title={fa.home.contactTitle}
         subtitle={fa.home.contactSubtitle}
       >
-        <ContactForm />
+        <div data-reveal>
+          <ContactForm />
+        </div>
       </Section>
     </main>
   );

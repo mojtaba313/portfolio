@@ -11,6 +11,7 @@ import { forceCenter } from "d3-force";
 import {
   buildGraph,
   createSimulation,
+  resolveCategoryPalette,
   settleSimulation,
   type GraphLink,
   type GraphNode,
@@ -182,7 +183,9 @@ export function SkillsCanvas({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const { nodes, links } = buildGraph(data);
+    // Resolved inside the effect (not at module scope) so a theme flip rebuilds
+    // the graph against the new mode's tokens rather than stale colours.
+    const { nodes, links } = buildGraph(data, resolveCategoryPalette());
     nodesRef.current = nodes;
     linksRef.current = links;
 

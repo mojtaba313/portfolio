@@ -41,14 +41,13 @@ export interface GraphLink extends SimulationLinkDatum<GraphNode> {
 }
 
 /**
- * Temporary category palette.
+ * Fallback category palette, used only when the theme tokens cannot be read.
  *
- * TODO(DESIGN): replace with theme tokens when the palette lands. The design
- * audit found `--chart-1..5` are five identical greys while SkillCategory has
- * six values, so there is currently nothing in the theme to reference. These
- * hues are borrowed from the seeded brand colours so nodes stay recognisable
- * until then. Nothing else in the app may import this map — it is intentionally
- * not a global palette, just the graph's private fallback.
+ * The live palette is `--category-*` in globals.css, resolved per mode by
+ * `resolveCategoryPalette()` below so canvas nodes follow light/dark and any
+ * future palette change with no code touched here. This map stays as the
+ * fallback for non-DOM contexts (tests, SSR) and as documentation of which
+ * categories exist. Nothing else in the app may import it.
  */
 export const CATEGORY_COLORS: Record<string, string> = {
   LANGUAGE: "#3178c6",
@@ -58,6 +57,40 @@ export const CATEGORY_COLORS: Record<string, string> = {
   DEVOPS: "#e95420",
   TOOLING: "#f05033",
 };
+
+const CATEGORY_KEYS = [
+  "LANGUAGE",
+  "FRONTEND",
+  "BACKEND",
+  "DATABASE",
+  "DEVOPS",
+  "TOOLING",
+] as const;
+
+/**
+ * Reads the live `--category-*` tokens from the document.
+ *
+ * Canvas cannot consume Tailwind classes, so this bridges the theme into
+ * concrete colour strings. `oklch()` values work directly as canvas fill
+ * styles in all modern browsers. Falls back to CATEGORY_COLORS when there is
+ * no document (SSR, tests) or a token is missing, so a partial theme can never
+ * produce an invisible node.
+ */
+export function resolveCategoryPalette(): Record<string, string> {
+  const palette: Record<string, string> = { ...CATEGORY_COLORS };
+
+  if (typeof document === "undefined") return palette;
+
+  const styles = getComputedStyle(document.documentElement);
+  for (const key of CATEGORY_KEYS) {
+    const value = styles
+      .getPropertyValue(`--category-${key.toLowerCase()}`)
+      .trim();
+    if (value) palette[key] = value;
+  }
+
+  return palette;
+}
 
 /** Project nodes stay neutral so the coloured skill nodes carry the meaning. */
 export const PROJECT_NODE_COLOR = "#a3a3a3";
@@ -77,7 +110,10 @@ function projectRadius(skillCount: number): number {
   return 9 + Math.min(skillCount, 8);
 }
 
-export function buildGraph(data: GraphData): {
+export function buildGraph(
+  data: GraphData,
+  palette: Record<string, string> = CATEGORY_COLORS,
+): {
   nodes: GraphNode[];
   links: GraphLink[];
 } {
@@ -88,7 +124,7 @@ export function buildGraph(data: GraphData): {
         kind: "skill",
         label: skill.name,
         color:
-          skill.color ?? CATEGORY_COLORS[skill.category] ?? FALLBACK_NODE_COLOR,
+          skill.color ?? palette[skill.category] ?? FALLBACK_NODE_COLOR,
         radius: skillRadius(skill.proficiency),
         url: null,
         category: skill.category,

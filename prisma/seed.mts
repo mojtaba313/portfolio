@@ -34,11 +34,11 @@ const SKILLS: Prisma.SkillCreateInput[] = [
 
   // Frontend
   { slug: "react", name: "React", category: "FRONTEND", proficiency: 5, color: "#61dafb", displayOrder: 1 },
-  { slug: "nextjs", name: "Next.js", category: "FRONTEND", proficiency: 5, color: "#ffffff", displayOrder: 2, description: "App Router، سرور کامپوننت‌ها و رندر جریانی." },
+  { slug: "nextjs", name: "Next.js", category: "FRONTEND", proficiency: 5, color: null, displayOrder: 2, description: "App Router، سرور کامپوننت‌ها و رندر جریانی." },
   { slug: "tailwindcss", name: "Tailwind CSS", category: "FRONTEND", proficiency: 5, color: "#38bdf8", displayOrder: 3 },
   { slug: "motion", name: "Motion", category: "FRONTEND", proficiency: 4, color: "#ff4d94", displayOrder: 4 },
   { slug: "gsap", name: "GSAP", category: "FRONTEND", proficiency: 4, color: "#88ce02", displayOrder: 5 },
-  { slug: "threejs", name: "Three.js", category: "FRONTEND", proficiency: 3, color: "#ffffff", displayOrder: 6 },
+  { slug: "threejs", name: "Three.js", category: "FRONTEND", proficiency: 3, color: null, displayOrder: 6 },
   { slug: "d3", name: "D3.js", category: "FRONTEND", proficiency: 4, color: "#f9a03c", displayOrder: 7 },
 
   // Backend

@@ -191,7 +191,7 @@ export function ContactForm() {
             aria-live={isSuccess ? "polite" : "assertive"}
             className={
               isSuccess
-                ? "text-sm font-medium text-emerald-600 dark:text-emerald-400"
+                ? "text-success text-sm font-medium"
                 : "text-destructive text-sm font-medium"
             }
           >

@@ -9,10 +9,21 @@ import { SectionPlaceholder } from "@/components/section";
 import { fa } from "@/content/fa";
 import type { GraphData } from "@/lib/db/projects";
 
-import {
-  CATEGORY_COLORS,
-  PROJECT_NODE_COLOR,
-} from "../lib/force-layout";
+import { PROJECT_NODE_COLOR } from "../lib/force-layout";
+
+/*
+ * Full class strings, not interpolations: Tailwind generates utilities by
+ * scanning source for literals, so `bg-category-${key.toLowerCase()}` would
+ * silently produce nothing. Unknown categories fall back to muted.
+ */
+const CATEGORY_DOT_CLASSES: Record<string, string> = {
+  LANGUAGE: "bg-category-language",
+  FRONTEND: "bg-category-frontend",
+  BACKEND: "bg-category-backend",
+  DATABASE: "bg-category-database",
+  DEVOPS: "bg-category-devops",
+  TOOLING: "bg-category-tooling",
+};
 
 /*
  * The canvas (and therefore d3-force) loads only on the client, behind an
@@ -57,8 +68,7 @@ function Legend({ categories }: { categories: string[] }) {
         <li key={category} className="flex items-center gap-1.5">
           <span
             aria-hidden
-            className="size-2.5 rounded-full"
-            style={{ backgroundColor: CATEGORY_COLORS[category] }}
+            className={`size-2.5 rounded-full ${CATEGORY_DOT_CLASSES[category] ?? "bg-muted"}`}
           />
           {/* Category names are enum keys (LANGUAGE, FRONTEND, …) — Latin
               identifiers, so they keep their own direction inside RTL text. */}

@@ -42,6 +42,15 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  /* Project tokens. --success is a text-only signal colour; --category-* give
+     the six SkillCategory values distinct hues the grey chart scale cannot. */
+  --color-success: var(--success);
+  --color-category-language: var(--category-language);
+  --color-category-frontend: var(--category-frontend);
+  --color-category-backend: var(--category-backend);
+  --color-category-database: var(--category-database);
+  --color-category-devops: var(--category-devops);
+  --color-category-tooling: var(--category-tooling);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -58,23 +67,38 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  /* Primary is cyan, deep enough that white text on it passes contrast. */
+  --primary: oklch(0.55 0.11 210);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
+  /* Secondary is orange, kept as a tinted surface with a deep warm-brown text. */
+  --secondary: oklch(0.94 0.05 60);
+  --secondary-foreground: oklch(0.35 0.09 55);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  /* Accent carries a faint cyan tint so hover states read as part of the theme. */
+  --accent: oklch(0.95 0.04 200);
+  --accent-foreground: oklch(0.38 0.1 210);
   --destructive: oklch(0.577 0.245 27.325);
+  /* Text-only signal colour for form success states. */
+  --success: oklch(0.52 0.15 155);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --ring: oklch(0.55 0.11 210);
+  /* Categorical hues shared with --category-*. chart-* keeps the shadcn
+     five-slot convention; the sixth category lives only in --category-*. */
+  --chart-1: oklch(0.58 0.16 255);
+  --chart-2: oklch(0.6 0.14 195);
+  --chart-3: oklch(0.6 0.16 150);
+  --chart-4: oklch(0.6 0.17 295);
+  --chart-5: oklch(0.62 0.16 55);
+  /* Six hues for the six SkillCategory values. Tuned per mode so each stays
+     legible on both the light card and the dark card surfaces. */
+  --category-language: oklch(0.58 0.16 255);
+  --category-frontend: oklch(0.6 0.14 195);
+  --category-backend: oklch(0.6 0.16 150);
+  --category-database: oklch(0.6 0.17 295);
+  --category-devops: oklch(0.62 0.16 55);
+  --category-tooling: oklch(0.6 0.17 345);
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
@@ -93,31 +117,40 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
+  /* Bright cyan against the dark surface; keeps the dark-first identity. */
+  --primary: oklch(0.82 0.11 210);
   --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.3 0.08 55);
+  --secondary-foreground: oklch(0.95 0.05 60);
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.25 0.06 210);
+  --accent-foreground: oklch(0.9 0.06 210);
   --destructive: oklch(0.704 0.191 22.216);
+  --success: oklch(0.72 0.15 160);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --ring: oklch(0.82 0.11 210);
+  --chart-1: oklch(0.72 0.14 255);
+  --chart-2: oklch(0.74 0.13 195);
+  --chart-3: oklch(0.74 0.15 150);
+  --chart-4: oklch(0.73 0.15 295);
+  --chart-5: oklch(0.75 0.14 55);
+  --category-language: oklch(0.72 0.14 255);
+  --category-frontend: oklch(0.74 0.13 195);
+  --category-backend: oklch(0.74 0.15 150);
+  --category-database: oklch(0.73 0.15 295);
+  --category-devops: oklch(0.75 0.14 55);
+  --category-tooling: oklch(0.73 0.15 345);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  /* Was a stray blue-purple unrelated to the theme; now follows primary. */
+  --sidebar-primary: oklch(0.82 0.11 210);
+  --sidebar-primary-foreground: oklch(0.205 0 0);
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-ring: oklch(0.82 0.11 210);
 }
 
 @layer base {
@@ -180,6 +213,43 @@
   font-variant-numeric: tabular-nums lining-nums;
   line-height: 1.6;
   text-align: left;
+}
+
+/*
+ * Above-the-fold hero entrance. CSS rather than GSAP on purpose: the hero
+ * paints on first load, and any JavaScript-driven entrance would either delay
+ * that paint or flash unstyled content. Stagger comes from per-element delays.
+ * The reduced-motion rule below neutralises this automatically.
+ */
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility hero-rise {
+  animation: hero-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@utility hero-delay-1 {
+  animation-delay: 0.08s;
+}
+
+@utility hero-delay-2 {
+  animation-delay: 0.16s;
+}
+
+@utility hero-delay-3 {
+  animation-delay: 0.24s;
+}
+
+@utility hero-delay-4 {
+  animation-delay: 0.32s;
 }
 
 /*
