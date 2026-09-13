@@ -1,9 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useReducedMotion } from "motion/react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
+
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
 import { useUiStore } from "@/lib/store/ui-store";
 
@@ -32,17 +33,17 @@ const SCENE_SCHEMES: Record<"dark" | "light", SceneScheme> = {
   dark: {
     bright: "#67e8f9",
     deep: "#155e75",
-    opacity: 0.6,
-    lineOpacity: 0.14,
-    glowOpacity: 0.16,
+    opacity: 0.32,
+    lineOpacity: 0.045,
+    glowOpacity: 0.06,
     additive: true,
   },
   light: {
     bright: "#0e7490",
     deep: "#67e8f9",
-    opacity: 0.45,
-    lineOpacity: 0.18,
-    glowOpacity: 0.1,
+    opacity: 0.24,
+    lineOpacity: 0.07,
+    glowOpacity: 0.04,
     additive: false,
   },
 };
@@ -67,8 +68,9 @@ function GradientFallback() {
 export function SceneBackground() {
   const threeDEnabled = useUiStore((state) => state.threeDEnabled);
   const { resolvedTheme } = useTheme();
-  // Null before mount; the scene is the default, the fallback the opt-out.
-  const prefersReducedMotion = useReducedMotion() ?? false;
+  // False through hydration (server snapshot), then the live value — so the
+  // first client render matches the SSR HTML exactly.
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   /*
    * Read once in the initializer, not synced in an effect: the value never

@@ -42,6 +42,7 @@ export const fa = {
     home: "خانه",
     projects: "پروژه‌ها",
     skills: "مهارت‌ها",
+    github: "گیت‌هاب",
     contact: "تماس",
   },
 
@@ -73,6 +74,26 @@ export const fa = {
     heroCtaProjects: "دیدن پروژه‌ها",
     heroCtaContact: "تماس با من",
     heroTerminalHint: "برای باز کردن ترمینال، Ctrl و ` را بزنید",
+    /** Latin eyebrow above the headline. Never translated — it is a signature. */
+    heroEyebrow: "MOJTABA",
+    /** Headline, one entry per revealed line. Confident, no marketing noise. */
+    heroHeadline: [
+      "چیزی میسازم",
+      "که فقط کار نکنه",
+      "لذتشو ببری",
+    ],
+    /** Latin stack line under the supporting text. */
+    heroStack: "Next.js · React · TypeScript · Node.js",
+    heroScroll: "اسکرول",
+    /** Believable editor content for the hero visual — real stack, minimal. */
+    heroCodeFile: "experience.ts",
+    heroCode: [
+      "const experience = {",
+      '  frontend: ["React", "Next.js"],',
+      '  motion: ["GSAP", "Motion"],',
+      '  language: "TypeScript",',
+      "};",
+    ],
     projectsTitle: "پروژه‌ها",
     projectsSubtitle: "چند نمونه از کارهایی که ساخته‌ام.",
     projectsEmpty: "هنوز پروژه‌ای منتشر نشده است.",

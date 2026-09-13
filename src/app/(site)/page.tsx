@@ -2,11 +2,10 @@ import { cacheLife, cacheTag } from "next/cache";
 
 import { ProjectCard } from "@/components/project-card";
 import { Section, SectionPlaceholder } from "@/components/section";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { Button } from "@/components/ui/button";
-import { fa, site } from "@/content/fa";
+import { fa } from "@/content/fa";
 import { ContactForm } from "@/features/contact/components/contact-form";
 import { GithubStats } from "@/features/github-stats/components/github-stats";
+import { Hero } from "@/features/hero/components/hero";
 import { SkillsGraph } from "@/features/skills-graph/components/skills-graph";
 import { getGraphData, getProjectCards } from "@/lib/db/projects";
 import { SECTION_IDS } from "@/lib/sections";
@@ -95,44 +94,14 @@ async function CachedGithubStats() {
 
 export default function Home() {
   return (
-    <main id="main" className="mx-auto w-full max-w-4xl flex-1 px-6 pb-24">
-      <header className="flex items-center justify-between gap-4 py-6">
-        <span className="text-muted-foreground font-mono text-sm" dir="ltr">
-          {site.url.replace(/^https?:\/\//, "")}
-        </span>
-        <ThemeToggle />
-      </header>
-
-      {/* Hero — static content, so it prerenders with no cache directive. The
-          entrance is CSS-only: a GSAP hero would cost first paint, and the
-          reduced-motion fallback comes free from the global rule. */}
-      <section className="space-y-5 py-12">
-        <h1 className="hero-rise text-4xl font-bold tracking-tight sm:text-5xl">
-          {site.name}
-        </h1>
-        <p className="hero-rise hero-delay-1 text-primary text-lg font-medium">
-          {site.role}
-        </p>
-        <p className="hero-rise hero-delay-2 text-muted-foreground max-w-prose text-balance">
-          {site.tagline}
-        </p>
-
-        <div className="hero-rise hero-delay-3 flex flex-wrap items-center gap-3 pt-2">
-          <Button size="lg" asChild>
-            {/* Plain anchors, not <Link>: these are in-page fragments on the
-                current route, so client-side routing has nothing to do. */}
-            <a href={`#${SECTION_IDS.projects}`}>{fa.home.heroCtaProjects}</a>
-          </Button>
-          <Button size="lg" variant="outline" asChild>
-            <a href={`#${SECTION_IDS.contact}`}>{fa.home.heroCtaContact}</a>
-          </Button>
-        </div>
-
-        <p className="hero-rise hero-delay-4 text-muted-foreground pt-2 text-xs">
-          {fa.home.heroTerminalHint}
-        </p>
-      </section>
-
+    <>
+      {/* Full-viewport hero with its own wide container; the sections below
+          keep the narrower reading measure. */}
+      <Hero />
+      <main
+        id="main"
+        className="mx-auto w-full max-w-4xl flex-1 px-6 pb-24"
+      >
       <Section
         id={SECTION_IDS.projects}
         title={fa.home.projectsTitle}
@@ -176,6 +145,7 @@ export default function Home() {
           <ContactForm />
         </div>
       </Section>
-    </main>
+      </main>
+    </>
   );
 }

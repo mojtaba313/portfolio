@@ -216,15 +216,40 @@
 }
 
 /*
- * Above-the-fold hero entrance. CSS rather than GSAP on purpose: the hero
- * paints on first load, and any JavaScript-driven entrance would either delay
- * that paint or flash unstyled content. Stagger comes from per-element delays.
- * The reduced-motion rule below neutralises this automatically.
+ * Scroll-cue pulse: a short segment travelling down a hairline track. The only
+ * looping animation in the hero, and a 2.4s period keeps it calm. Neutralised
+ * for reduced motion by the global rule below, leaving the static line.
  */
-@keyframes hero-rise {
+@keyframes hero-scroll {
+  0% {
+    transform: translateY(-100%);
+  }
+  60%,
+  100% {
+    transform: translateY(200%);
+  }
+}
+
+@utility animate-hero-scroll {
+  animation: hero-scroll 2.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+/*
+ * Hero entrance choreography. CSS rather than a JS animation library, and the
+ * reason is hydration: the server cannot know the visitor's reduced-motion
+ * preference, so any JS component that renders different first-paint output
+ * when reduced motion is on (Motion included) mismatches the server HTML and
+ * throws a hydration error for exactly those users. CSS keyframes render
+ * byte-identical markup on both sides, and the reduced-motion rule below
+ * collapses every entrance to its end state for free.
+ *
+ * Staggering comes from inline animation-delay styles, which are equally
+ * deterministic on both sides.
+ */
+@keyframes hero-fade-up {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -232,25 +257,70 @@
   }
 }
 
-@utility hero-rise {
-  animation: hero-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+@keyframes hero-line-rise {
+  from {
+    transform: translateY(110%);
+  }
+  to {
+    transform: none;
+  }
 }
 
-@utility hero-delay-1 {
-  animation-delay: 0.08s;
+@keyframes hero-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-@utility hero-delay-2 {
-  animation-delay: 0.16s;
+@keyframes hero-visual-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-@utility hero-delay-3 {
-  animation-delay: 0.24s;
+@keyframes hero-nav-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
-@utility hero-delay-4 {
-  animation-delay: 0.32s;
+@utility animate-hero-fade-up {
+  animation: hero-fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+
+@utility animate-hero-line {
+  animation: hero-line-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@utility animate-hero-fade {
+  animation: hero-fade 0.6s ease-out both;
+}
+
+@utility animate-hero-visual {
+  animation: hero-visual-in 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@utility animate-hero-nav {
+  animation: hero-nav-drop 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/*
+ * The hero workspace is a real Three.js scene (see hero-workspace-canvas):
+ * depth, lighting and parallax live in WebGL, so no CSS 3D helpers remain
+ * here. The wrapper-level fade (`animate-hero-visual`) still introduces the
+ * column; everything spatial happens inside the canvas.
+ */
 
 /*
  * Global safety net for users who ask for reduced motion. This only covers CSS

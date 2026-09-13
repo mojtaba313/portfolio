@@ -2,8 +2,9 @@
 
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
-import { useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
+
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
 import { SectionPlaceholder } from "@/components/section";
 import { fa } from "@/content/fa";
@@ -93,9 +94,10 @@ export function SkillsGraph({ data }: { data: GraphData }) {
   const [inView, setInView] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
 
-  // Null before mount; the animated graph is the default, the static one the
-  // opt-out. A non-null assertion would lie about the loading state.
-  const prefersReducedMotion = useReducedMotion() ?? false;
+  // False through hydration (server snapshot), then the live value. Safe here
+  // either way — the canvas mounts behind an observer after hydration — but
+  // sharing the hook keeps the whole tree on one contract.
+  const prefersReducedMotion = usePrefersReducedMotion();
   const { resolvedTheme } = useTheme();
 
   useEffect(() => {

@@ -33,11 +33,13 @@ function mulberry32(seed: number) {
   };
 }
 
-const PARTICLE_COUNT = 650;
+const PARTICLE_COUNT = 240;
+const MOBILE_PARTICLE_COUNT = 120;
 const FIELD_SEED = 20260906;
 /** Pairs closer than this get a constellation segment. */
-const LINK_DISTANCE = 0.85;
-const MAX_LINKS = 600;
+const LINK_DISTANCE = 0.65;
+const MAX_LINKS = 180;
+const MOBILE_LINK_COUNT = 70;
 
 type FieldData = {
   positions: Float32Array;
@@ -64,8 +66,10 @@ function buildField(): FieldData {
     positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta) * 0.6;
     positions[i * 3 + 2] = radius * Math.cos(phi) * 0.6 - 1;
     phases[i] = rand();
-    // A few hero stars among the dust: mostly small, rarely large.
-    scales[i] = rand() < 0.08 ? 2.2 + rand() * 1.4 : 0.7 + rand() * 0.9;
+    // A few hero stars among the dust: mostly small, rarely visible. Kept
+    // deliberately faint so the field reads as depth, not as competition with
+    // the Persian headline.
+    scales[i] = rand() < 0.05 ? 1.3 + rand() * 0.7 : 0.45 + rand() * 0.55;
     // Colour mix: outer particles drift toward the deep tone.
     mixes[i] = Math.min(1, radius / 4.5) * 0.7 + rand() * 0.3;
   }
@@ -111,6 +115,7 @@ const VERTEX_SHADER = /* glsl */ `
   uniform float uTime;
   uniform float uPixelRatio;
   uniform vec2 uMouseWorld;
+  uniform vec4 uQuiet;
   varying vec3 vColor;
   varying float vAlpha;
   uniform vec3 uBright;
@@ -128,16 +133,25 @@ const VERTEX_SHADER = /* glsl */ `
     p.xy += (diff / max(dist, 0.0001)) * force;
 
     // Slow individual drift on top of the rigid group rotation, so the field
-    // never looks frozen even when the group barely moves.
-    p.x += sin(uTime * 0.12 + aPhase * 6.2831) * 0.08;
-    p.y += cos(uTime * 0.1 + aPhase * 6.2831) * 0.08;
+    // never looks frozen even when the group barely moves. Very restrained.
+    p.x += sin(uTime * 0.08 + aPhase * 6.2831) * 0.04;
+    p.y += cos(uTime * 0.06 + aPhase * 6.2831) * 0.04;
 
     vec4 mv = modelViewMatrix * vec4(p, 1.0);
-    gl_Position = projectionMatrix * mv;
+    vec4 clip = projectionMatrix * mv;
+    gl_Position = clip;
 
-    // Twinkle: each particle pulses on its own phase and frequency.
-    float tw = 0.55 + 0.45 * sin(uTime * (0.5 + aPhase * 1.2) + aPhase * 6.2831);
-    vAlpha = tw;
+    // Quiet zone: fade particles near the headline in screen space. Because
+    // this is computed after projection, the calm area stays aligned with the
+    // text even while the field itself rotates slowly behind it.
+    vec2 ndc = clip.xy / max(abs(clip.w), 0.0001);
+    float quietDistance = distance(ndc, uQuiet.xy);
+    float quiet = smoothstep(uQuiet.z * 0.35, uQuiet.z, quietDistance);
+
+    // Twinkle: each particle pulses gently on its own phase and frequency.
+    // Kept subdued so the field reads as quiet depth, not as a light show.
+    float tw = 0.65 + 0.35 * sin(uTime * (0.35 + aPhase * 0.8) + aPhase * 6.2831);
+    vAlpha = tw * mix(1.0, quiet, uQuiet.w);
     vColor = mix(uBright, uDeep, aMix);
 
     gl_PointSize = uPixelRatio * aScale * (140.0 / -mv.z) * (0.75 + 0.45 * tw);
@@ -218,6 +232,7 @@ function Starfield({ scheme }: { scheme: SceneScheme }) {
           uTime: { value: 0 },
           uPixelRatio: { value: 1 },
           uMouseWorld: { value: new THREE.Vector2(999, 999) },
+          uQuiet: { value: new THREE.Vector4(0.34, 0.08, 0.72, 0.9) },
           uOpacity: { value: scheme.opacity },
           uBright: { value: new THREE.Color(scheme.bright) },
           uDeep: { value: new THREE.Color(scheme.deep) },
@@ -243,6 +258,26 @@ function Starfield({ scheme }: { scheme: SceneScheme }) {
   const scroll = useRef(typeof window !== "undefined" ? window.scrollY : 0);
   const size = useThree((state) => state.size);
   const viewportDpr = useThree((state) => state.viewport.dpr);
+
+  // Narrow viewports get a sparser field from the same deterministic layout.
+  // Subarrays are views into the shared buffers, so no additional geometry
+  // memory is allocated for the mobile variant.
+  const isNarrow = size.width < 640;
+  const pointPositions = isNarrow
+    ? FIELD.positions.subarray(0, MOBILE_PARTICLE_COUNT * 3)
+    : FIELD.positions;
+  const pointPhases = isNarrow
+    ? FIELD.phases.subarray(0, MOBILE_PARTICLE_COUNT)
+    : FIELD.phases;
+  const pointScales = isNarrow
+    ? FIELD.scales.subarray(0, MOBILE_PARTICLE_COUNT)
+    : FIELD.scales;
+  const pointMixes = isNarrow
+    ? FIELD.mixes.subarray(0, MOBILE_PARTICLE_COUNT)
+    : FIELD.mixes;
+  const constellationPositions = isNarrow
+    ? FIELD.linkPositions.subarray(0, MOBILE_LINK_COUNT * 6)
+    : FIELD.linkPositions;
 
   useEffect(() => {
     const onPointerMove = (event: PointerEvent) => {
@@ -281,10 +316,26 @@ function Starfield({ scheme }: { scheme: SceneScheme }) {
       uTime: { value: number };
       uPixelRatio: { value: number };
       uMouseWorld: { value: THREE.Vector2 };
+      uQuiet: { value: THREE.Vector4 };
     };
 
     uniforms.uTime.value += step;
     uniforms.uPixelRatio.value = viewportDpr;
+
+    // Keep the calmest part of the field behind the headline while the hero is
+    // visible. On wide screens the Persian column sits right of center; on
+    // narrow screens the stacked headline sits near the top. Fade the effect
+    // as the visitor leaves the hero so lower sections keep their atmosphere.
+    const quiet = uniforms.uQuiet.value;
+    const heroVisibility = Math.max(
+      0,
+      1 - scroll.current / (window.innerHeight * 0.8),
+    );
+    if (size.width >= size.height) {
+      quiet.set(0.34, 0.08, 0.72, 0.9 * heroVisibility);
+    } else {
+      quiet.set(0, 0.42, 0.58, 0.62 * heroVisibility);
+    }
 
     // World-units-per-NDC at the field's depth: visible half-height at z=0
     // with the camera at z=7, fov 60. Keeps the repulsion glued to the cursor.
@@ -303,7 +354,7 @@ function Starfield({ scheme }: { scheme: SceneScheme }) {
       mouse.y += (999 - mouse.y) * step * 4;
     }
 
-    node.rotation.y += step * 0.03;
+    node.rotation.y += step * 0.015;
     const targetY = -(scroll.current / window.innerHeight) * 0.6;
     node.position.y += (targetY - node.position.y) * step * 2;
   });
@@ -311,11 +362,11 @@ function Starfield({ scheme }: { scheme: SceneScheme }) {
   return (
     <group ref={group}>
       <points frustumCulled={false}>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[FIELD.positions, 3]} />
-          <bufferAttribute attach="attributes-aPhase" args={[FIELD.phases, 1]} />
-          <bufferAttribute attach="attributes-aScale" args={[FIELD.scales, 1]} />
-          <bufferAttribute attach="attributes-aMix" args={[FIELD.mixes, 1]} />
+        <bufferGeometry key={isNarrow ? "narrow" : "wide"}>
+          <bufferAttribute attach="attributes-position" args={[pointPositions, 3]} />
+          <bufferAttribute attach="attributes-aPhase" args={[pointPhases, 1]} />
+          <bufferAttribute attach="attributes-aScale" args={[pointScales, 1]} />
+          <bufferAttribute attach="attributes-aMix" args={[pointMixes, 1]} />
         </bufferGeometry>
         <primitive object={material} attach="material" />
       </points>
@@ -323,10 +374,10 @@ function Starfield({ scheme }: { scheme: SceneScheme }) {
       {/* Constellation layer: static geometry in the same group, so it rides
           the rotation for free with zero per-frame cost. */}
       <lineSegments frustumCulled={false}>
-        <bufferGeometry>
+        <bufferGeometry key={isNarrow ? "narrow" : "wide"}>
           <bufferAttribute
             attach="attributes-position"
-            args={[FIELD.linkPositions, 3]}
+            args={[constellationPositions, 3]}
           />
         </bufferGeometry>
         <lineBasicMaterial
@@ -340,7 +391,9 @@ function Starfield({ scheme }: { scheme: SceneScheme }) {
         />
       </lineSegments>
 
-      <sprite position={[0, 0.4, -3.5]} scale={[11, 11, 1]}>
+      {/* Soft ambient glow, kept left of the headline so it supports the visual
+          workspace without competing with the typography. */}
+      <sprite position={[-1.4, -0.3, -4.5]} scale={[12, 12, 1]}>
         <spriteMaterial
           map={glowTexture}
           color={scheme.bright}
