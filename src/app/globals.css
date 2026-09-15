@@ -323,6 +323,26 @@
  */
 
 /*
+ * Project journey. The markup renders as a stacked list without JavaScript or
+ * under reduced motion. When the animator activates on large screens it pins
+ * the stage and cross-fades between panels.
+ *
+ * The preview and details panels are stacked via absolute positioning in the
+ * grid columns (see the `lg:grid` in projects-section.tsx). The animator
+ * controls opacity and transform of each panel via GSAP; the CSS here only
+ * sets up the scrollbar hiding.
+ */
+
+/* Hide scrollbar on the cards strip. */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/*
  * Global safety net for users who ask for reduced motion. This only covers CSS
  * transitions and animations — GSAP timelines, Motion springs and the canvas
  * render loops each have to check the same preference in JS, since none of

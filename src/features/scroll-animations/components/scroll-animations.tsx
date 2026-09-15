@@ -9,11 +9,20 @@ gsap.registerPlugin(ScrollTrigger);
 /**
  * Scroll-driven entrance animations for below-fold content.
  *
- * Any element with `data-reveal` fades up as it enters the viewport. `gsap.from`
- * rather than `gsap.to` is load-bearing, not stylistic: before the animation
- * runs, and if this chunk never loads at all, the element sits at its natural
- * fully-visible state. Content can never be stuck invisible because JavaScript
- * failed — the worst case is a page with no entrance animations.
+ * Three conventions, all trigger-based (no pinning, no scrubbing — safe on
+ * touch devices) and all `gsap.from`:
+ *
+ * - `data-reveal` — the element itself fades up on entry.
+ * - `data-reveal-group` + `data-reveal-item` children — children rise in a
+ *   stagger cascade when the group enters (chip rows, feature lists).
+ * - `data-reveal-zoom` — media frames settle from a slight scale-down
+ *   while fading in, so imagery lands with weight instead of popping.
+ *
+ * `gsap.from` rather than `gsap.to` is load-bearing, not stylistic: before
+ * the animation runs, and if this chunk never loads at all, the element
+ * sits at its natural fully-visible state. Content can never be stuck
+ * invisible because JavaScript failed — the worst case is a page with no
+ * entrance animations.
  *
  * Scope is deliberately narrow: section headers, project cards, the GitHub
  * panel and the contact form — plus the hero *exit* below. The skills graph is
@@ -30,12 +39,50 @@ export function ScrollAnimations() {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((element) => {
+      // Responsive variants render twice (desktop + mobile) with one side
+      // `display: none`. Animating the hidden copy is pure waste, so skip it.
+      if (!element.offsetParent) return;
       gsap.from(element, {
         y: 28,
         opacity: 0,
         duration: 0.8,
         ease: "power3.out",
         scrollTrigger: { trigger: element, start: "top 88%", once: true },
+      });
+    });
+
+    /*
+     * Stagger cascades: each `[data-reveal-item]` inside a
+     * `[data-reveal-group]` rises in sequence when the group enters.
+     */
+    gsap.utils.toArray<HTMLElement>("[data-reveal-group]").forEach((group) => {
+      if (!group.offsetParent) return;
+      const items =
+        group.querySelectorAll<HTMLElement>("[data-reveal-item]");
+      if (items.length === 0) return;
+      gsap.from(items, {
+        y: 22,
+        opacity: 0,
+        duration: 0.6,
+        ease: "power3.out",
+        stagger: 0.08,
+        scrollTrigger: { trigger: group, start: "top 85%", once: true },
+      });
+    });
+
+    /*
+     * Media landings: frames settle from a slight zoom while fading in.
+     * GPU-only (transform + opacity) so it stays smooth on mobile GPUs.
+     */
+    gsap.utils.toArray<HTMLElement>("[data-reveal-zoom]").forEach((frame) => {
+      if (!frame.offsetParent) return;
+      gsap.from(frame, {
+        y: 32,
+        scale: 1.06,
+        opacity: 0,
+        duration: 0.9,
+        ease: "power3.out",
+        scrollTrigger: { trigger: frame, start: "top 88%", once: true },
       });
     });
 

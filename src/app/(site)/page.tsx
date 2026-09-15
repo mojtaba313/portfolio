@@ -1,67 +1,38 @@
 import { cacheLife, cacheTag } from "next/cache";
 
-import { ProjectCard } from "@/components/project-card";
-import { Section, SectionPlaceholder } from "@/components/section";
+import { Section } from "@/components/section";
 import { fa } from "@/content/fa";
 import { ContactForm } from "@/features/contact/components/contact-form";
 import { GithubStats } from "@/features/github-stats/components/github-stats";
 import { Hero } from "@/features/hero/components/hero";
+import { ProjectJourneyLoader } from "@/features/projects/components/project-journey-loader";
+import { ProjectsSection } from "@/features/projects/components/projects-section";
 import { SkillsGraph } from "@/features/skills-graph/components/skills-graph";
-import { getGraphData, getProjectCards } from "@/lib/db/projects";
+import { getGraphData } from "@/lib/db/projects";
 import { SECTION_IDS } from "@/lib/sections";
 
 /**
- * Cached projects grid.
+ * Cached project journey.
  *
  * `"use cache"` rather than a `<Suspense>` boundary: this content is identical
  * for every visitor and changes only when the database changes, so caching puts
- * it in the static shell and the page ships fully rendered. A Suspense boundary
- * would stream a skeleton on every request for no benefit.
- *
- * `cacheTag` gives a handle for targeted invalidation — an admin action or a
- * deploy hook can call `revalidateTag("projects")` instead of waiting out the
- * lifetime.
+ * it in the static shell and the page ships fully rendered. `cacheTag` gives a
+ * handle for targeted invalidation — an admin action can call
+ * `revalidateTag("projects")` instead of waiting out the lifetime.
  */
-async function ProjectsGrid() {
+async function CachedProjectsSection() {
   "use cache";
   cacheLife("hours");
   cacheTag("projects");
 
-  const projects = await getProjectCards();
-
-  if (projects.length === 0) {
-    return <SectionPlaceholder note={fa.home.projectsEmpty} />;
-  }
-
-  return (
-    <ul className="grid gap-4 sm:grid-cols-2">
-      {projects.map((project) => (
-        <li key={project.slug} data-reveal className="flex">
-          <ProjectCard project={project} />
-        </li>
-      ))}
-    </ul>
-  );
+  return <ProjectsSection />;
 }
 
 /**
- * Cached GitHub panel.
- *
- * `"use cache"` on top of a cache that already lives in Postgres is not
- * redundant: without it this database read is uncached data at request time, so
- * the route could not prerender and every visitor would pay a query. The two
- * layers answer different questions — Postgres holds data GitHub is slow to give
- * us, this holds rendered output the page is otherwise blocked on.
- *
- * The lifetime is shorter than the projects grid because the underlying job
- * refreshes every 20 minutes; caching for hours would make the "updated X ago"
- * label lie.
- */
-/**
  * Cached skills graph data.
  *
- * Same pattern as the projects grid: identical for every visitor, changing only
- * when the database changes, so it belongs in the static shell. The graph
+ * Same pattern as the projects section: identical for every visitor, changing
+ * only when the database changes, so it belongs in the static shell. The graph
  * *itself* stays fully client-side — what crosses the server boundary is just
  * the node and edge lists, which the canvas component feeds to d3-force.
  */
@@ -95,56 +66,53 @@ async function CachedGithubStats() {
 export default function Home() {
   return (
     <>
-      {/* Full-viewport hero with its own wide container; the sections below
-          keep the narrower reading measure. */}
+      {/* Full-viewport hero with its own wide container. */}
       <Hero />
-      <main
-        id="main"
-        className="mx-auto w-full max-w-4xl flex-1 px-6 pb-24"
-      >
-      <Section
-        id={SECTION_IDS.projects}
-        title={fa.home.projectsTitle}
-        subtitle={fa.home.projectsSubtitle}
-      >
-        <ProjectsGrid />
-      </Section>
+      <main id="main" className="flex-1">
+        {/* The project journey is a full-width stage — each project needs the
+            horizontal room — so it sits outside the reading-measure wrapper the
+            later sections use. The animator is loaded on its own so GSAP stays
+            out of the initial bundle; without it the journey is a plain stack. */}
+        <CachedProjectsSection />
+        <ProjectJourneyLoader />
 
-      {/*
-       * The remaining sections are anchors first and features second. Having the
-       * ids in the document now means `skills --graph` and `github --stats`
-       * already scroll somewhere, and each feature drops in behind its
-       * placeholder without the terminal commands changing.
-       */}
-      <Section
-        id={SECTION_IDS.skills}
-        title={fa.home.skillsTitle}
-        subtitle={fa.home.skillsSubtitle}
-      >
-        <CachedSkillsGraph />
-      </Section>
+        <div className="mx-auto w-full max-w-4xl px-6 pb-24">
+          {/*
+           * The remaining sections are anchors first and features second. Having
+           * the ids in the document now means `skills --graph` and `github
+           * --stats` already scroll somewhere, and each feature drops in behind
+           * its placeholder without the terminal commands changing.
+           */}
+          <Section
+            id={SECTION_IDS.skills}
+            title={fa.home.skillsTitle}
+            subtitle={fa.home.skillsSubtitle}
+          >
+            <CachedSkillsGraph />
+          </Section>
 
-      <Section
-        id={SECTION_IDS.github}
-        title={fa.home.githubTitle}
-        subtitle={fa.home.githubSubtitle}
-      >
-        {/* Plain wrapper: the reveal animation targets this div so the feature
-            component itself stays unaware of the animation layer. */}
-        <div data-reveal>
-          <CachedGithubStats />
+          <Section
+            id={SECTION_IDS.github}
+            title={fa.home.githubTitle}
+            subtitle={fa.home.githubSubtitle}
+          >
+            {/* Plain wrapper: the reveal animation targets this div so the
+                feature component itself stays unaware of the animation layer. */}
+            <div data-reveal>
+              <CachedGithubStats />
+            </div>
+          </Section>
+
+          <Section
+            id={SECTION_IDS.contact}
+            title={fa.home.contactTitle}
+            subtitle={fa.home.contactSubtitle}
+          >
+            <div data-reveal>
+              <ContactForm />
+            </div>
+          </Section>
         </div>
-      </Section>
-
-      <Section
-        id={SECTION_IDS.contact}
-        title={fa.home.contactTitle}
-        subtitle={fa.home.contactSubtitle}
-      >
-        <div data-reveal>
-          <ContactForm />
-        </div>
-      </Section>
       </main>
     </>
   );

@@ -26,18 +26,38 @@ export function ScrollAnimationsLoader() {
    * restore-on-load. If the page is ever too short to scroll, the reveals are
    * unnecessary by definition.
    *
-   * setState happens only inside the event callback (a subscription), never
-   * synchronously in the effect body.
+   * The initial render is always `null` (identical on server and client) and
+   * state flips only from async callbacks — never synchronously in the effect
+   * body — so this component can never cause a hydration mismatch itself.
+   *
+   * This loader renders last in the layout, so this effect — and therefore
+   * any GSAP style write — can only run after all page content has hydrated.
+   * The rAF gate additionally covers scroll restoration and deep links, which
+   * may already be past the top before the listener attaches.
    */
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const onFirstScroll = () => setScrolled(true);
-    window.addEventListener("scroll", onFirstScroll, {
-      passive: true,
-      once: true,
+    let frame = 0;
+    const onFirstScroll = () => {
+      cancelAnimationFrame(frame);
+      setScrolled(true);
+    };
+    frame = requestAnimationFrame(() => {
+      window.removeEventListener("scroll", onFirstScroll);
+      if (window.scrollY > 0) {
+        setScrolled(true);
+      } else {
+        window.addEventListener("scroll", onFirstScroll, {
+          passive: true,
+          once: true,
+        });
+      }
     });
-    return () => window.removeEventListener("scroll", onFirstScroll);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onFirstScroll);
+    };
   }, []);
 
   if (!scrolled) return null;

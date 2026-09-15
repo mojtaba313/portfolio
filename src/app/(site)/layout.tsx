@@ -101,8 +101,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
            * never join the initial payload.
            */}
           <SceneBackground />
-          <ScrollAnimationsLoader />
           <TerminalDock />
+          {/*
+           * The animation loader deliberately renders last. It hydrates after
+           * every content subtree, so its scroll listener — and therefore any
+           * GSAP inline style — can only ever touch fully-hydrated DOM. If it
+           * ran earlier, a fast scroll (or scroll restoration) could let
+           * `gsap.from()` write starting styles onto still-unhydrated server
+           * HTML, and React would fail hydration on the mismatch.
+           */}
+          <ScrollAnimationsLoader />
         </ThemeProvider>
       </body>
     </html>

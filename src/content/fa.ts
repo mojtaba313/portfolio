@@ -94,9 +94,6 @@ export const fa = {
       '  language: "TypeScript",',
       "};",
     ],
-    projectsTitle: "پروژه‌ها",
-    projectsSubtitle: "چند نمونه از کارهایی که ساخته‌ام.",
-    projectsEmpty: "هنوز پروژه‌ای منتشر نشده است.",
     skillsTitle: "گراف مهارت‌ها",
     skillsSubtitle:
       "نقشهٔ تعاملی مهارت‌ها و پروژه‌هایی که در آن‌ها به کار رفته‌اند.",
@@ -111,13 +108,36 @@ export const fa = {
     /** Verb-led so it reads naturally next to a project title. */
     viewLive: "مشاهدهٔ سایت",
     viewRepo: "کد منبع",
-    backToProjects: "بازگشت به پروژه‌ها",
+    backToProjects: "بازگشت به پروژهها",
     client: "کارفرما",
     completedAt: "تاریخ انجام",
-    skillsUsed: "فناوری‌های به‌کاررفته",
+    skillsUsed: "فناوریهای بهکاررفته",
     featured: "شاخص",
     notFoundTitle: "پروژه پیدا نشد",
-    notFoundBody: "این نشانی به هیچ پروژهٔ منتشرشده‌ای مربوط نیست.",
+    notFoundBody: "این نشانی به هیچ پروژهٔ منتشرشدهای مربوط نیست.",
+  },
+
+  /**
+   * Home-page "project journey". The Persian copy is editorial voice here, not
+   * labels — it sets the tone of the showcase, so it lives with the rest of the
+   * reader-facing strings rather than inside the component.
+   */
+  journey: {
+    eyebrow: "PROJECTS",
+    /** Section heading — "Selected" in white, "Projects" in accent. */
+    titleLead: "Selected",
+    titleAccent: "Projects",
+    titleTail: "",
+    problem: "Problem",
+    solution: "Solution",
+    stack: "Stack",
+    /** Rendered under the counter, e.g. "01 / 03". */
+    counterSeparator: "/",
+    /** Hint that a project has a dedicated page. */
+    openProject: "مشاهده پروژه",
+    /** Scroll hint shown at the bottom-left of the stage. */
+    scrollHint: "اسکرول کنید",
+    empty: "هنوز پروژهای برای نمایش وجود ندارد.",
   },
 
   contact: {

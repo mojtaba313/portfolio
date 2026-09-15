@@ -90,6 +90,16 @@ model Project {
   /// Long-form Persian description for the detail page. Markdown.
   description String?
 
+  /// The problem this project set out to solve, in the reader's words. Shown in
+  /// the home-page project journey; optional so a project can ship without a
+  /// case-study narrative and the UI simply omits that block.
+  problem String?
+
+  /// How the problem was solved — the counterpart to `problem`. Kept as its own
+  /// field rather than folded into `description` because the journey presents
+  /// the two side by side and needs to address them independently.
+  solution String?
+
   /// Optional client or employer name. Null for personal projects.
   client String?
 
