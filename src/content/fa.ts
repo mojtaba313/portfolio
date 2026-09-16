@@ -187,6 +187,13 @@ export const fa = {
     directMessage: "پیام مستقیم",
   },
 
+  footer: {
+    /** Closing credit: "ساخته شده با ♥ توسط مجتبی" — the heart is rendered
+        separately in primary, and the name links to GitHub. */
+    madeWith: "ساخته شده با",
+    by: "توسط",
+  },
+
   skills: {
     /** Rendered above the canvas as the interaction hint. */
     hint: "نشانگر را روی صورت‌فلکی حرکت دهید؛ روی یک ستاره بزنید تا جزئیاتش را ببینید.",

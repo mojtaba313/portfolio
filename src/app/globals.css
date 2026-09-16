@@ -343,6 +343,23 @@
 }
 
 /*
+ * Navbar settle: once the travelling header has come to rest in the footer
+ * dock, its floating pill chrome dissolves. Only surface properties are
+ * overridden — layout classes (radius, margin, padding) stay — and the
+ * inner pill's own `transition-all` carries the melt, so the treatment
+ * fades rather than snaps. Specificity (three attribute selectors) beats
+ * the Tailwind utilities only while `data-docked` is present; removing the
+ * attribute hands styling straight back with no residue. `blur(0px)` rather
+ * than `none` so the backdrop-filter interpolates instead of stepping.
+ */
+[data-navbar][data-docked] [data-navbar-inner] {
+  background-color: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  backdrop-filter: blur(0px) saturate(1);
+}
+
+/*
  * Global safety net for users who ask for reduced motion. This only covers CSS
  * transitions and animations — GSAP timelines, Motion springs and the canvas
  * render loops each have to check the same preference in JS, since none of

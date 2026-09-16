@@ -3,6 +3,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { Section } from "@/components/section";
 import { fa } from "@/content/fa";
 import { ContactFinale } from "@/features/contact/components/contact-finale";
+import { Footer } from "@/features/footer/components/footer";
 import { GithubStats } from "@/features/github-stats/components/github-stats";
 import { Hero } from "@/features/hero/components/hero";
 import { ProjectJourneyLoader } from "@/features/projects/components/project-journey-loader";
@@ -115,6 +116,10 @@ export default function Home() {
           </Section>
         </div>
       </main>
+
+      {/* The page coming to rest — the sticky navbar settles into its dock
+          here (see navbar.tsx) instead of a second navigation. */}
+      <Footer />
     </>
   );
 }
