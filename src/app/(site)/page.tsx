@@ -32,9 +32,10 @@ async function CachedProjectsSection() {
  * Cached skills graph data.
  *
  * Same pattern as the projects section: identical for every visitor, changing
- * only when the database changes, so it belongs in the static shell. The graph
- * *itself* stays fully client-side — what crosses the server boundary is just
- * the node and edge lists, which the canvas component feeds to d3-force.
+ * only when the database changes, so it belongs in the static shell. The
+ * constellation *itself* stays fully client-side — what crosses the server
+ * boundary is just the skill and project lists, which the canvas component
+ * lays out deterministically.
  */
 async function CachedSkillsGraph() {
   "use cache";

@@ -29,6 +29,7 @@ export type SkillNode = {
   proficiency: number;
   color: string | null;
   description: string | null;
+  displayOrder: number;
 };
 
 /** A project node, plus the ids of the skills it links to. */
@@ -192,6 +193,7 @@ export async function getProjectBySlug(
               proficiency: true,
               color: true,
               description: true,
+              displayOrder: true,
             },
           },
         },
@@ -257,6 +259,7 @@ export async function getGraphData(): Promise<GraphData> {
         proficiency: true,
         color: true,
         description: true,
+        displayOrder: true,
       },
     }),
     getPublishedProjects(),

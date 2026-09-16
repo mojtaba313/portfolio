@@ -27,14 +27,22 @@ export const CATEGORY_COLORS: Record<string, string> = {
 /** Project nodes stay neutral so the coloured skill nodes carry the meaning. */
 export const PROJECT_NODE_COLOR = "#a3a3a3";
 
-const CATEGORY_KEYS = [
+export type CategoryKey =
+  | "LANGUAGE"
+  | "FRONTEND"
+  | "BACKEND"
+  | "DATABASE"
+  | "DEVOPS"
+  | "TOOLING";
+
+const CATEGORY_KEYS: CategoryKey[] = [
   "LANGUAGE",
   "FRONTEND",
   "BACKEND",
   "DATABASE",
   "DEVOPS",
   "TOOLING",
-] as const;
+];
 
 /**
  * Reads the live `--category-*` tokens from the document.

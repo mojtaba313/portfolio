@@ -94,9 +94,9 @@ export const fa = {
       '  language: "TypeScript",',
       "};",
     ],
-    skillsTitle: "گراف مهارت‌ها",
+    skillsTitle: "صورت‌فلکی فناوری",
     skillsSubtitle:
-      "نقشهٔ تعاملی مهارت‌ها و پروژه‌هایی که در آن‌ها به کار رفته‌اند.",
+      "جهان تکنولوژی‌های من — نشانگر را نزدیک کنید تا ستاره‌ها واکنش نشان دهند، روی هر ستاره بزنید تا جزئیاتش را ببینید.",
     githubTitle: "فعالیت گیت‌هاب",
     githubSubtitle: "آمار مخازن و مشارکت‌ها، به‌روزرسانی‌شده به‌صورت زمان‌بندی‌شده.",
     contactTitle: "تماس",
@@ -152,21 +152,34 @@ export const fa = {
 
   skills: {
     /** Rendered above the canvas as the interaction hint. */
-    hint: "روی یک مهارت بزنید تا پروژه‌های مرتبط برجسته شود؛ روی یک پروژه بزنید تا صفحه‌اش باز شود.",
+    hint: "نشانگر را روی صورت‌فلکی حرکت دهید؛ روی یک ستاره بزنید تا جزئیاتش را ببینید.",
     legendSkill: "مهارت",
     legendProject: "پروژه",
-    loading: "در حال آماده‌سازی گراف…",
-    empty: "هنوز داده‌ای برای نمایش گراف وجود ندارد.",
+    loading: "در حال آماده‌سازی صورت‌فلکی…",
+    empty: "هنوز داده‌ای برای نمایش صورت‌فلکی وجود ندارد.",
+    coreName: "MOJTABA",
+    coreRole: "FULL STACK",
+    /** Small stats row above the canvas. */
+    stats: (skills: string, projects: string, links: string) =>
+      `${skills} فناوری · ${projects} پروژه · ${links} پیوند`,
+    allCategories: "همه",
+    /** Details panel. */
+    detailsTitle: "جزئیات ستاره",
+    detailsEmpty:
+      "یک ستاره را انتخاب کنید تا سطح تسلط، دسته‌بندی و پروژه‌های مرتبطش را ببینید.",
+    proficiency: "سطح تسلط",
+    usedIn: "به‌کاررفته در",
+    viewProject: "مشاهده پروژه",
     /** Status line under the canvas when a skill is selected. */
     selectedSkill: (name: string, count: string) =>
       `${name} در ${count} پروژه به کار رفته است`,
     selectedProject: (title: string) => `${title} — برای باز شدن بزنید`,
     /** aria-label for the canvas as a whole. */
     canvasLabel: (skills: string, projects: string) =>
-      `گراف تعاملی مهارت‌ها: ${skills} مهارت و ${projects} پروژه`,
+      `صورت‌فلکی تعاملی فناوری: ${skills} مهارت و ${projects} پروژه`,
     /** Keyboard instructions, appended to the canvas label. */
     canvasKeys:
-      "با کلیدهای جهت‌دار بین گره‌ها حرکت کنید، با Enter باز کنید، با Escape رها کنید.",
+      "با کلیدهای جهت‌دار بین ستاره‌ها حرکت کنید، با Enter انتخاب کنید، با Escape رها کنید.",
   },
 
   github: {

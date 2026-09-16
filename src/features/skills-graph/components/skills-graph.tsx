@@ -2,20 +2,21 @@
 
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
 import { SectionPlaceholder } from "@/components/section";
 import { fa } from "@/content/fa";
 import type { GraphData } from "@/lib/db/projects";
+import { cn } from "@/lib/utils";
 
-import { PROJECT_NODE_COLOR } from "../lib/graph-theme";
+import { ConstellationDetails } from "./constellation-details";
 
 /*
  * Full class strings, not interpolations: Tailwind generates utilities by
- * scanning source for literals, so `bg-category-${key.toLowerCase()}` would
- * silently produce nothing. Unknown categories fall back to muted.
+ * scanning source for literals, so `bg-category-${key}` would silently
+ * produce nothing.
  */
 const CATEGORY_DOT_CLASSES: Record<string, string> = {
   LANGUAGE: "bg-category-language",
@@ -27,19 +28,16 @@ const CATEGORY_DOT_CLASSES: Record<string, string> = {
 };
 
 /*
- * The canvas (and therefore d3-force) loads only on the client, behind an
- * IntersectionObserver gate. Two separate decisions that must not be confused:
- *
- *  - `ssr: false` is required because the canvas reads layout sizes and opens a
- *    WebGL-free 2d context — both meaningless during prerender. It is also an
- *    error to call next/dynamic with ssr:false from a Server Component, which
- *    is why this wrapper exists as the thin client boundary the docs demand.
- *  - The observer gate is about bandwidth and CPU: d3-force plus the canvas
- *    code must not download or run until the section is actually approaching
- *    the viewport.
+ * The canvas loads only on the client, behind an IntersectionObserver gate.
+ * `ssr: false` is required (layout sizes, 2d context); the observer gate is
+ * about bandwidth and CPU — the engine chunk must not download until the
+ * section approaches the viewport.
  */
-const SkillsCanvas = dynamic(
-  () => import("./skills-canvas").then((module) => module.SkillsCanvas),
+const ConstellationCanvas = dynamic(
+  () =>
+    import("./constellation-canvas").then(
+      (module) => module.ConstellationCanvas,
+    ),
   {
     ssr: false,
     loading: () => <GraphSkeleton />,
@@ -51,61 +49,26 @@ function GraphSkeleton() {
     <div>
       <div
         aria-hidden
-        className="bg-muted h-[440px] w-full animate-pulse rounded-xl"
+        className="h-[460px] w-full animate-pulse rounded-2xl border border-white/10 bg-white/[0.03]"
       />
       <p className="sr-only">{fa.skills.loading}</p>
     </div>
   );
 }
 
-/**
- * Legend chips. HTML rather than canvas-drawn: they are real text, so they are
- * readable by assistive tech and selectable, at zero extra code.
- */
-function Legend({ categories }: { categories: string[] }) {
-  return (
-    <ul className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
-      {categories.map((category) => (
-        <li key={category} className="flex items-center gap-1.5">
-          <span
-            aria-hidden
-            className={`size-2.5 rounded-full ${CATEGORY_DOT_CLASSES[category] ?? "bg-muted"}`}
-          />
-          {/* Category names are enum keys (LANGUAGE, FRONTEND, …) — Latin
-              identifiers, so they keep their own direction inside RTL text. */}
-          <span dir="ltr" className="text-muted-foreground font-mono">
-            {category}
-          </span>
-        </li>
-      ))}
-      <li className="flex items-center gap-1.5">
-        <span
-          aria-hidden
-          className="size-2.5 rounded-full"
-          style={{ backgroundColor: PROJECT_NODE_COLOR }}
-        />
-        <span className="text-muted-foreground">{fa.skills.legendProject}</span>
-      </li>
-    </ul>
-  );
-}
-
 export function SkillsGraph({ data }: { data: GraphData }) {
   const [inView, setInView] = useState(false);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const anchorRef = useRef<HTMLDivElement>(null);
 
-  // False through hydration (server snapshot), then the live value. Safe here
-  // either way — the canvas mounts behind an observer after hydration — but
-  // sharing the hook keeps the whole tree on one contract.
   const prefersReducedMotion = usePrefersReducedMotion();
   const { resolvedTheme } = useTheme();
 
   useEffect(() => {
     const anchor = anchorRef.current;
     if (!anchor) return;
-
-    // Fires once: unobserve on first intersection, because there is nothing to
-    // gain from tearing the graph down when it scrolls back out of view.
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
@@ -113,40 +76,149 @@ export function SkillsGraph({ data }: { data: GraphData }) {
           observer.disconnect();
         }
       },
-      // Start loading slightly before the section arrives, so the chunk is
-      // ready by the time the user gets there.
       { rootMargin: "200px", threshold: 0 },
     );
-
     observer.observe(anchor);
     return () => observer.disconnect();
   }, []);
 
-  if (data.skills.length === 0 || data.projects.length === 0) {
+  const linkCount = useMemo(
+    () =>
+      data.projects.reduce((sum, project) => sum + project.skills.length, 0),
+    [data],
+  );
+
+  if (data.skills.length === 0) {
     return <SectionPlaceholder note={fa.skills.empty} />;
   }
 
   const categories = [
     ...new Set(data.skills.map((skill) => skill.category)),
   ].sort();
+  // Hover previews; click pins. The panel follows whatever is live.
+  const previewId = hoveredId ?? selectedId;
 
   return (
     <div ref={anchorRef}>
       {inView ? (
-        <>
-          <SkillsCanvas
-            data={data}
-            dark={resolvedTheme === "dark"}
-            staticLayout={prefersReducedMotion}
-          />
-          <Legend categories={categories} />
-        </>
+        <div className="space-y-4">
+          <p data-numeric className="text-muted-foreground text-xs">
+            {fa.skills.stats(
+              data.skills.length.toLocaleString("fa-IR"),
+              data.projects.length.toLocaleString("fa-IR"),
+              linkCount.toLocaleString("fa-IR"),
+            )}
+          </p>
+
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_250px]">
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#050a14] shadow-[0_0_60px_-20px_rgba(34,211,238,0.35)]">
+              <ConstellationCanvas
+                data={data}
+                dark={resolvedTheme !== "light"}
+                staticLayout={prefersReducedMotion}
+                selectedId={selectedId}
+                hoveredId={hoveredId}
+                categoryFilter={categoryFilter}
+                onHover={setHoveredId}
+                onSelect={setSelectedId}
+              />
+            </div>
+
+            <aside className="flex min-h-52 flex-col gap-3 lg:min-h-full">
+              <div
+                className="flex flex-wrap items-center gap-1.5"
+                role="group"
+                aria-label={fa.skills.legendSkill}
+              >
+                <FilterChip
+                  active={categoryFilter === null}
+                  onClick={() => setCategoryFilter(null)}
+                >
+                  {fa.skills.allCategories}
+                </FilterChip>
+                {categories.map((category) => (
+                  <FilterChip
+                    key={category}
+                    active={categoryFilter === category}
+                    onClick={() =>
+                      setCategoryFilter(
+                        categoryFilter === category ? null : category,
+                      )
+                    }
+                    dotClass={CATEGORY_DOT_CLASSES[category]}
+                  >
+                    <span dir="ltr" className="font-mono">
+                      {category}
+                    </span>
+                  </FilterChip>
+                ))}
+              </div>
+              <div className="min-h-48 flex-1 lg:min-h-0">
+                <ConstellationDetails
+                  data={data}
+                  activeId={previewId}
+                  pinned={
+                    selectedId !== null && hoveredId === null
+                  }
+                />
+              </div>
+            </aside>
+          </div>
+
+          <p className="text-muted-foreground text-xs">{fa.skills.hint}</p>
+
+          <ul className="sr-only">
+            {data.skills.map((skill) => (
+              <li key={skill.id}>
+                {skill.name}
+                {(() => {
+                  const titles = data.projects
+                    .filter((project) =>
+                      project.skills.some(
+                        (edge) => edge.skillId === skill.id,
+                      ),
+                    )
+                    .map((project) => project.title);
+                  return titles.length > 0 ? `: ${titles.join("، ")}` : "";
+                })()}
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : (
-        // Reserves the layout space before the observer fires, so mounting the
-        // graph does not shift the page (CLS). The pulse animation is CSS, so
-        // the global reduced-motion rule already neutralises it.
         <GraphSkeleton />
       )}
     </div>
+  );
+}
+
+function FilterChip({
+  active,
+  onClick,
+  dotClass,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  dotClass?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition-colors",
+        active
+          ? "border-cyan-300/40 bg-cyan-300/10 text-foreground"
+          : "border-white/10 bg-white/[0.02] text-muted-foreground hover:border-white/25 hover:text-foreground",
+      )}
+    >
+      {dotClass && (
+        <span aria-hidden className={cn("size-2 rounded-full", dotClass)} />
+      )}
+      {children}
+    </button>
   );
 }
