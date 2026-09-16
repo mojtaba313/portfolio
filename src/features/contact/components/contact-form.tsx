@@ -20,6 +20,7 @@ import {
 } from "@/lib/validation/contact";
 
 import { submitContactForm } from "../actions";
+import { Magnetic } from "./magnetic";
 
 /**
  * Contact form.
@@ -53,7 +54,7 @@ export function ContactForm() {
   } = useForm<ContactInput, unknown, ContactData>({
     resolver: zodResolver(contactSchema),
     // Validate as fields are left rather than on every keystroke: mid-typing
-    // "email is invalid" on a half-entered address is noise, not help.
+    // "contact is invalid" on a half-entered address is noise, not help.
     mode: "onBlur",
     defaultValues: { name: "", email: "", subject: "", message: "", botField: "" },
   });
@@ -84,7 +85,7 @@ export function ContactForm() {
   const isSuccess = result?.status === "success";
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-8">
       {/*
        * Honeypot. Hidden from sight and from assistive tech, and excluded from
        * the tab order, so no real user can reach it — while a bot that fills
@@ -108,7 +109,7 @@ export function ContactForm() {
         />
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid gap-8 sm:grid-cols-2">
         <Field
           id="name"
           label={fa.contact.name}
@@ -120,6 +121,8 @@ export function ContactForm() {
             maxLength={CONTACT_LIMITS.nameMax}
             autoComplete="name"
             aria-invalid={!!errors.name}
+            
+            className={FIELD_CLASS}
             {...register("name")}
           />
         </Field>
@@ -131,16 +134,23 @@ export function ContactForm() {
           required
         >
           {/*
-           * dir="ltr" because an email address is Latin: inside an RTL field the
-           * bidi algorithm moves the leading "@" or a trailing dot to the wrong
-           * end while typing, which looks broken even though the value is fine.
-           */}
+            * dir="ltr" because the value is Latin either way: inside an RTL
+            * field the bidi algorithm moves the leading "@" of an email — or
+            * the leading "+" of a phone number — to the wrong end while
+            * typing, which looks broken even though the value is fine.
+            * type="text" (not "email") so mobile keyboards and native
+            * validation don't assume the value is always an address; the Zod
+            * schema above is the only validator. No autoComplete token covers
+            * an either-or field, so none is set rather than a misleading one.
+            */}
           <Input
             id="email"
-            type="email"
+            type="text"
             dir="ltr"
-            autoComplete="email"
+            autoComplete="off"
             aria-invalid={!!errors.email}
+            
+            className={FIELD_CLASS}
             {...register("email")}
           />
         </Field>
@@ -151,6 +161,8 @@ export function ContactForm() {
           id="subject"
           maxLength={CONTACT_LIMITS.subjectMax}
           aria-invalid={!!errors.subject}
+          
+          className={FIELD_CLASS}
           {...register("subject")}
         />
       </Field>
@@ -163,22 +175,38 @@ export function ContactForm() {
       >
         <Textarea
           id="message"
-          rows={6}
+          rows={5}
           maxLength={CONTACT_LIMITS.messageMax}
           aria-invalid={!!errors.message}
+          
+          className={FIELD_CLASS}
           {...register("message")}
         />
       </Field>
 
       <div className="flex flex-wrap items-center gap-4">
-        <Button type="submit" size="lg" disabled={isSubmitting}>
-          {isSubmitting ? (
-            <Loader2 className="animate-spin" aria-hidden />
-          ) : (
-            <Send aria-hidden />
-          )}
-          {isSubmitting ? fa.contact.sending : fa.contact.submit}
-        </Button>
+        {/*
+         * Magnetic like the CTA above and the social pills below: the submit
+         * is the moment of sending, so it gets the same pull. Same pill
+         * language as the CTA (h-13, rounded-full, primary glow) so the two
+         * primary actions read as one voice. A disabled button fires no
+         * pointer events, so the magnet naturally rests while submitting.
+         */}
+        <Magnetic strength={0.3}>
+          <Button
+            type="submit"
+            size="lg"
+            disabled={isSubmitting}
+            className="h-13 gap-2.5 rounded-full px-8 text-base font-semibold shadow-[0_0_36px_-8px_var(--primary)] hover:shadow-[0_0_54px_-6px_var(--primary)]"
+          >
+            {isSubmitting ? (
+              <Loader2 className="size-5 animate-spin" aria-hidden />
+            ) : (
+              <Send className="size-5" aria-hidden />
+            )}
+            {isSubmitting ? fa.contact.sending : fa.contact.submit}
+          </Button>
+        </Magnetic>
 
         {/*
          * One live region for both outcomes, so a screen reader announces the
@@ -204,6 +232,20 @@ export function ContactForm() {
 }
 
 /**
+ * Elevated boxed fields for the finale.
+ *
+ * Roomy, softly-surfaced inputs with a cyan focus halo instead of the default
+ * ring — the glow is the same energy as the orb above, so the form reads as
+ * part of the transmission rather than a separate widget. `focus-visible:ring-0`
+ * is load-bearing: the base inputs ship `focus-visible:ring-3`, and without
+ * cancelling it the custom halo shadow would fight the ring in the cascade.
+ * Error states are untouched — the base destructive border still wins on
+ * invalid fields.
+ */
+const FIELD_CLASS =
+  "h-13 rounded-xl border-border/70 bg-white/[0.02] px-4 text-base transition-all duration-300 placeholder:text-muted-foreground/50 hover:border-foreground/25 focus-visible:border-cyan-300/60 focus-visible:ring-0 focus-visible:shadow-[0_0_0_3px_rgba(34,211,238,0.12)] dark:bg-white/[0.03]";
+
+/**
  * Label + control + error message, wired together.
  *
  * Exists so every field gets `aria-describedby` pointing at its error and the
@@ -227,7 +269,7 @@ function Field({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor={id}>
+      <Label htmlFor={id} className="text-muted-foreground text-xs font-normal">
         {label}
         {required && (
           <span aria-hidden className="text-destructive">

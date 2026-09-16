@@ -36,8 +36,9 @@ export type RateLimitVerdict =
  * Checks whether this sender has already submitted too much.
  *
  * Two independent limits: one per IP so a single machine cannot flood, and a
- * tighter one per email address so rotating IPs does not defeat it. Both read
- * the composite indexes declared on ContactMessage.
+ * tighter one per contact handle (email address or phone number — the form
+ * accepts either, stored in the `email` column) so rotating IPs does not
+ * defeat it. Both read the composite indexes declared on ContactMessage.
  *
  * Counting rows in a time window rather than a token bucket in memory: the VPS
  * runs a single Next process today, but an in-memory counter would silently stop

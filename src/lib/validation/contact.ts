@@ -25,6 +25,40 @@ export const CONTACT_LIMITS = {
   messageMax: 4000,
 } as const;
 
+/**
+ * Converts Persian/Arabic-Indic digits to Latin so a phone number typed on a
+ * Persian keyboard validates the same as one typed in Latin digits.
+ */
+function latinDigits(value: string): string {
+  return value
+    .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+    .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
+}
+
+/**
+ * Canonical phone form: Latin digits with visual separators removed, optional
+ * leading `+` kept. Stored (and rate-limited) in this form so `0912 345 6789`
+ * and `09123456789` count as the same sender.
+ */
+export function normalizePhone(value: string): string {
+  return latinDigits(value).replace(/[\s\-().]/g, "");
+}
+
+/** True for a plausible international phone number: 7–15 digits, optional +. */
+function isPhoneNumber(value: string): boolean {
+  return /^\+?\d{7,15}$/.test(normalizePhone(value));
+}
+
+/** Deliberately simple — the schema's job is catching typos, not RFC 5322. */
+function isEmailAddress(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+/** Used by the Server Action: `replyTo` only makes sense for an email. */
+export function isContactEmail(value: string): boolean {
+  return value.includes("@");
+}
+
 export const contactSchema = z.object({
   name: z
     .string({ error: "نام را وارد کنید." })
@@ -34,11 +68,25 @@ export const contactSchema = z.object({
       error: `نام نباید بیشتر از ${CONTACT_LIMITS.nameMax} نویسه باشد.`,
     }),
 
+  /*
+   * Email **or** phone: the visitor leaves whichever way reaches them. The key
+   * stays `email` (and maps to the existing `ContactMessage.email` column) so
+   * no migration is needed — but the value may be a phone number, which is why
+   * the label, the notification body and `replyTo` all treat it as an opaque
+   * contact handle rather than assuming an address.
+   */
   email: z
-    .email({ error: "نشانی ایمیل معتبر نیست." })
-    // Normalised so rate limiting and duplicate checks compare like with like.
+    .string({ error: "راه ارتباطی را وارد کنید." })
     .trim()
-    .toLowerCase(),
+    .min(1, { error: "راه ارتباطی را وارد کنید." })
+    .refine((value) => isEmailAddress(value) || isPhoneNumber(value), {
+      error: "ایمیل یا شماره تماس معتبر نیست.",
+    })
+    // Normalised so rate limiting and duplicate checks compare like with like:
+    // emails lowercased, phones in canonical digit form.
+    .transform((value) =>
+      value.includes("@") ? value.toLowerCase() : normalizePhone(value),
+    ),
 
   /*
    * `nullish()` rather than `optional()`, and this is the fix for a real bug.

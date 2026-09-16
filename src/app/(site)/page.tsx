@@ -2,7 +2,7 @@ import { cacheLife, cacheTag } from "next/cache";
 
 import { Section } from "@/components/section";
 import { fa } from "@/content/fa";
-import { ContactForm } from "@/features/contact/components/contact-form";
+import { ContactFinale } from "@/features/contact/components/contact-finale";
 import { GithubStats } from "@/features/github-stats/components/github-stats";
 import { Hero } from "@/features/hero/components/hero";
 import { ProjectJourneyLoader } from "@/features/projects/components/project-journey-loader";
@@ -92,26 +92,26 @@ export default function Home() {
             <CachedSkillsGraph />
           </Section>
 
-          <Section
+          {/* I don't need this section for now. I'm going to implement it later. */}
+          {/* <Section
             id={SECTION_IDS.github}
             title={fa.home.githubTitle}
             subtitle={fa.home.githubSubtitle}
           >
             {/* Plain wrapper: the reveal animation targets this div so the
                 feature component itself stays unaware of the animation layer. */}
-            <div data-reveal>
+          {/* <div data-reveal>
               <CachedGithubStats />
             </div>
-          </Section>
+          </Section> */}
 
           <Section
             id={SECTION_IDS.contact}
             title={fa.home.contactTitle}
             subtitle={fa.home.contactSubtitle}
           >
-            <div data-reveal>
-              <ContactForm />
-            </div>
+            {/* No outer data-reveal: the finale owns its entrances per block. */}
+            <ContactFinale />
           </Section>
         </div>
       </main>

@@ -11,6 +11,7 @@ import {
 import { getMailConfig } from "@/lib/resend";
 import {
   contactSchema,
+  isContactEmail,
   type ContactData,
   type ContactResult,
 } from "@/lib/validation/contact";
@@ -49,7 +50,7 @@ function buildEmail(data: ContactData) {
 
   const text = [
     `Name:    ${data.name}`,
-    `Email:   ${data.email}`,
+    `Contact: ${data.email}`,
     `Subject: ${data.subject ?? "—"}`,
     "",
     data.message,
@@ -136,7 +137,7 @@ export async function submitContactForm(
       reason: "rate_limited",
       message:
         verdict.scope === "email"
-          ? "از این ایمیل به‌تازگی چند پیام فرستاده شده است. کمی بعد دوباره تلاش کنید."
+          ? "از این راه ارتباطی به‌تازگی چند پیام فرستاده شده است. کمی بعد دوباره تلاش کنید."
           : "تعداد پیام‌های ارسالی زیاد بوده است. یک ساعت بعد دوباره تلاش کنید.",
     };
   }
@@ -178,8 +179,10 @@ export async function submitContactForm(
       to: mail.to,
       subject,
       text,
-      // So a reply in the mail client goes to the sender, not to myself.
-      replyTo: data.email,
+      // So a reply in the mail client goes to the sender, not to myself —
+      // but only when the contact handle is actually an email address. A
+      // phone number as replyTo would make Resend reject the send.
+      ...(isContactEmail(data.email) ? { replyTo: data.email } : {}),
     });
 
     // Resend reports failures as a value on the response, not by throwing, so

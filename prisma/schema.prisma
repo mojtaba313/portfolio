@@ -221,6 +221,8 @@ model ContactMessage {
   id String @id @default(cuid())
 
   name    String
+  /// Email address **or** phone number — the form accepts either (see
+  /// `contactSchema`). The name stays `email` so no migration is needed.
   email   String
   subject String?
   message String

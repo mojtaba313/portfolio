@@ -23,6 +23,28 @@ export const site = {
    * resolve absolutely. Override per-environment via NEXT_PUBLIC_SITE_URL.
    */
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  /**
+   * Public contact channels, rendered in the contact finale. An entry that
+   * resolves to an empty string is omitted — so configure only what exists
+   * rather than linking somewhere dead. Usernames come from NEXT_PUBLIC_
+   * variables (see .env.example): unlike the server-only GITHUB_USERNAME /
+   * CONTACT_TO_EMAIL, anything printed on the page must use the NEXT_PUBLIC_
+   * prefix or the browser build inlines `undefined`.
+   */
+  contact: {
+    /** Shown as the direct-email link with a copy button. */
+    email: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "",
+    /** Full profile URLs, built from public usernames. */
+    github: process.env.NEXT_PUBLIC_GITHUB_USERNAME
+      ? `https://github.com/${process.env.NEXT_PUBLIC_GITHUB_USERNAME}`
+      : "",
+    linkedin: process.env.NEXT_PUBLIC_LINKEDIN_USERNAME
+      ? `https://www.linkedin.com/in/${process.env.NEXT_PUBLIC_LINKEDIN_USERNAME}`
+      : "",
+    telegram: process.env.NEXT_PUBLIC_TELEGRAM_USERNAME
+      ? `https://t.me/${process.env.NEXT_PUBLIC_TELEGRAM_USERNAME}`
+      : "",
+  },
 } as const;
 
 export const fa = {
@@ -77,11 +99,7 @@ export const fa = {
     /** Latin eyebrow above the headline. Never translated — it is a signature. */
     heroEyebrow: "MOJTABA",
     /** Headline, one entry per revealed line. Confident, no marketing noise. */
-    heroHeadline: [
-      "چیزی میسازم",
-      "که فقط کار نکنه",
-      "لذتشو ببری",
-    ],
+    heroHeadline: ["چیزی میسازم", "که فقط کار نکنه", "لذتشو ببری"],
     /** Latin stack line under the supporting text. */
     heroStack: "Next.js · React · TypeScript · Node.js",
     heroScroll: "اسکرول",
@@ -98,7 +116,8 @@ export const fa = {
     skillsSubtitle:
       "جهان تکنولوژی‌های من — نشانگر را نزدیک کنید تا ستاره‌ها واکنش نشان دهند، روی هر ستاره بزنید تا جزئیاتش را ببینید.",
     githubTitle: "فعالیت گیت‌هاب",
-    githubSubtitle: "آمار مخازن و مشارکت‌ها، به‌روزرسانی‌شده به‌صورت زمان‌بندی‌شده.",
+    githubSubtitle:
+      "آمار مخازن و مشارکت‌ها، به‌روزرسانی‌شده به‌صورت زمان‌بندی‌شده.",
     contactTitle: "تماس",
     contactSubtitle: "برای همکاری یا پیشنهاد شغلی پیام بدهید.",
     comingSoon: "این بخش در مرحلهٔ بعدی ساخته می‌شود.",
@@ -142,12 +161,30 @@ export const fa = {
 
   contact: {
     name: "نام",
-    email: "ایمیل",
+    email: "ایمیل یا شماره تماس",
     subject: "موضوع",
     message: "پیام",
     submit: "ارسال پیام",
     sending: "در حال ارسال…",
     success: "پیام شما ارسال شد. به‌زودی پاسخ می‌دهم.",
+    /** Latin eyebrow above the finale headline. Never translated — signature. */
+    finaleEyebrow: "NEW PROJECT ?",
+    /** Display headline, one entry per line. */
+    finaleHeadline: ["بیایید چیزی بسازیم که", "لذت بخش باشه"],
+    finaleSub:
+      "برای همکاری یا پیشنهاد شغلی پیام بدهید. هر پیام مستقیم به دست خودم می‌رسد.",
+    /** Availability badge next to the headline. */
+    available: "آماده همکاری",
+    /** Primary magnetic CTA: focuses the form below. */
+    startConversation: "شروع گفتگو",
+    /** Direct-email row. */
+    emailMe: "ایمیل مستقیم",
+    copyEmail: "کپی ایمیل",
+    emailCopied: "کپی شد",
+    /** Social rows. Labels stay Latin — they are service names. */
+    findMe: "جای دیگری هم هستم",
+    /** Quiet heading above the form itself. */
+    directMessage: "پیام مستقیم",
   },
 
   skills: {
@@ -197,7 +234,8 @@ export const fa = {
     legendMore: "بیشتر",
     updatedAt: (relative: string) => `به‌روزرسانی ${relative}`,
     /** Shown when the cache is older than the staleness threshold. */
-    staleNote: "داده‌ها به‌تازگی به‌روز نشده‌اند؛ آخرین مقدار موجود نشان داده می‌شود.",
+    staleNote:
+      "داده‌ها به‌تازگی به‌روز نشده‌اند؛ آخرین مقدار موجود نشان داده می‌شود.",
     /** Shown when the job has never completed successfully. */
     empty: "آمار گیت‌هاب هنوز در دسترس نیست.",
     viewProfile: "دیدن نمایهٔ گیت‌هاب",
