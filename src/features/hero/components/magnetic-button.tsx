@@ -75,7 +75,7 @@ export function MagneticButton({ children }: { children: React.ReactNode }) {
       ref={ref}
       onPointerMove={handleMove}
       onPointerLeave={handleLeave}
-      className="inline-flex will-change-transform"
+      className="inline-flex"
     >
       {children}
     </span>

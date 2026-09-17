@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Menu, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 
@@ -20,9 +21,9 @@ import { cn } from "@/lib/utils";
  */
 
 const LINKS = [
+  { href: "#top", label: fa.nav.home },
   { href: `#${SECTION_IDS.projects}`, label: fa.nav.projects },
   { href: `#${SECTION_IDS.skills}`, label: fa.nav.skills },
-  { href: `#${SECTION_IDS.github}`, label: fa.nav.github },
   { href: `#${SECTION_IDS.contact}`, label: fa.nav.contact },
 ] as const;
 
@@ -32,6 +33,7 @@ const SCROLL_THRESHOLD = 24;
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   /*
    * Settle journey (see the effect below): the header travels into the
@@ -53,9 +55,10 @@ export function Navbar() {
   }, []);
 
   /*
-   * Active-section spy. A single observer watches all four anchors; the middle
-   * band of the viewport decides, so exactly one link is active at a time and
-   * the indicator does not flicker between neighbours.
+   * Active-section spy. A single observer watches the anchors; the middle
+   * band of the viewport decides. When several entries intersect at once
+   * (short sections), the one with the largest ratio wins instead of
+   * last-callback-wins, so the indicator does not flicker.
    */
   useEffect(() => {
     const sections = LINKS.map(({ href }) => document.querySelector(href)).filter(
@@ -65,15 +68,36 @@ export function Navbar() {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) setActive(`#${entry.target.id}`);
-        }
+        const visible = entries.filter((entry) => entry.isIntersecting);
+        if (visible.length === 0) return;
+        visible.sort(
+          (a, b) => b.intersectionRatio - a.intersectionRatio,
+        );
+        setActive(`#${(visible[0].target as HTMLElement).id}`);
       },
-      { rootMargin: "-40% 0px -55% 0px", threshold: 0 },
+      { rootMargin: "-40% 0px -55% 0px", threshold: [0, 0.25, 0.5, 1] },
     );
     for (const section of sections) observer.observe(section);
     return () => observer.disconnect();
   }, []);
+
+  // Close the mobile menu on Esc and on hash navigation.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
+
+  /*
+   * A docked header is footer content, not navigation chrome: the dropdown
+   * has nowhere to open (downwards would spill into the footer). Derived,
+   * not an effect — while `docked` the menu reads as closed and the
+   * hamburger hides, with no cascading render.
+   */
+  const menuVisible = menuOpen && !docked;
 
   /*
    * Settle: when the footer arrives, this same header travels down and comes
@@ -167,10 +191,13 @@ export function Navbar() {
     };
     // Resize/layout signals that move the footer without scrolling: the dock
     // and main boxes (canvas mounts, images, fonts), late assets, webfonts.
+    // The header itself is observed too: the docked mobile links row changes
+    // its height, and the rest position must follow.
     const main = document.querySelector("main");
     const layoutObserver = new ResizeObserver(schedule);
     if (main) layoutObserver.observe(main);
     layoutObserver.observe(dock);
+    layoutObserver.observe(header);
     const onLoad = (): void => schedule();
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule);
@@ -229,9 +256,9 @@ export function Navbar() {
             : "border-transparent bg-transparent py-5",
         )}
       >
-        {/* Brand: Persian name with a cyan status dot. Links home. */}
+        {/* Brand: Persian name with a cyan status dot. Links to top. */}
         <Link
-          href="#main"
+          href="#top"
           className="focus-visible:ring-ring flex items-center gap-2 rounded-full focus-visible:ring-2 focus-visible:outline-none"
           aria-label={fa.nav.home}
         >
@@ -244,14 +271,14 @@ export function Navbar() {
           </span>
         </Link>
 
-        <nav aria-label={fa.nav.home} className="hidden items-center gap-1 md:flex">
+        <nav aria-label="ناوبری اصلی" className="hidden items-center gap-1 md:flex">
           {LINKS.map(({ href, label }) => {
             const isActive = active === href;
             return (
               <Link
                 key={href}
                 href={href}
-                aria-current={isActive ? "true" : undefined}
+                aria-current={isActive ? "location" : undefined}
                 className={cn(
                   "focus-visible:ring-ring relative rounded-full px-3.5 py-1.5 text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none",
                   isActive
@@ -277,7 +304,123 @@ export function Navbar() {
 
         <div className="flex items-center gap-1">
           <ThemeToggle />
+          {/* Hidden once docked: a resting footer header has no dropdown. */}
+          <button
+            type="button"
+            onClick={() => setMenuOpen((prev) => !prev)}
+            aria-expanded={menuVisible}
+            aria-controls="mobile-nav"
+            aria-label={menuVisible ? "بستن منو" : "باز کردن منو"}
+            className={cn(
+              "focus-visible:ring-ring text-muted-foreground hover:text-foreground hover:bg-muted/40 rounded-full p-2 transition-colors focus-visible:ring-2 focus-visible:outline-none md:hidden",
+              docked && "hidden",
+            )}
+          >
+            {/* Cross-fading icons: menu rotates out as the close rotates in. */}
+            <span aria-hidden className="relative block size-5">
+              <Menu
+                className={cn(
+                  "absolute inset-0 size-5 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+                  menuVisible ? "scale-75 rotate-90 opacity-0" : "scale-100 rotate-0 opacity-100",
+                )}
+              />
+              <X
+                className={cn(
+                  "absolute inset-0 size-5 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+                  menuVisible ? "scale-100 rotate-0 opacity-100" : "scale-75 -rotate-90 opacity-0",
+                )}
+              />
+            </span>
+          </button>
         </div>
+      </div>
+
+      {/*
+       * Mobile menu: same anchors, stacked pill dropdown. Always mounted so
+       * open/close can animate: the grid row collapses 1fr->0fr (height),
+       * the panel slides -12px and fades. `inert` keeps closed links out of
+       * Tab order and AT. The global reduced-motion rule collapses all of
+       * this to an instant toggle for free.
+       */}
+      <div
+        className={cn(
+          "mx-6 grid transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] md:hidden",
+          menuVisible ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+        )}
+      >
+        <nav
+          id="mobile-nav"
+          aria-label="ناوبری اصلی"
+          inert={!menuVisible}
+          className="min-h-0 overflow-hidden"
+        >
+          <div
+            className={cn(
+              "bg-background/95 border-border/50 rounded-2xl border p-2 shadow-lg backdrop-blur-xl transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+              menuVisible ? "translate-y-0" : "-translate-y-3",
+            )}
+          >
+            {LINKS.map(({ href, label }) => {
+              const isActive = active === href;
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setMenuOpen(false)}
+                  aria-current={isActive ? "location" : undefined}
+                  className={cn(
+                    "focus-visible:ring-ring block rounded-xl px-4 py-2.5 text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none",
+                    isActive
+                      ? "text-foreground bg-muted/60"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
+                  )}
+                >
+                  {label}
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
+      </div>
+
+      {/*
+       * Docked mobile links: an inline scrollable row like desktop. Once the
+       * header rests in the footer the dropdown has nowhere to open downwards,
+       * so the links live outside any menu instead — same anchors, same active
+       * states, no hamburger needed. Same grid-rows animation as the dropdown.
+       */}
+      <div
+        className={cn(
+          "mx-auto grid max-w-6xl transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] md:hidden",
+          docked ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+        )}
+      >
+        <nav
+          aria-label="ناوبری اصلی"
+          inert={!docked}
+          className="min-h-0 overflow-hidden"
+        >
+          <div className="scrollbar-none flex items-center justify-center gap-1 overflow-x-auto px-6 pt-2 pb-1">
+            {LINKS.map(({ href, label }) => {
+              const isActive = active === href;
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  aria-current={isActive ? "location" : undefined}
+                  className={cn(
+                    "focus-visible:ring-ring rounded-full px-3 py-1.5 text-[13px] whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:outline-none",
+                    isActive
+                      ? "text-foreground bg-muted/60"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
+                  )}
+                >
+                  {label}
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
       </div>
     </header>
   );

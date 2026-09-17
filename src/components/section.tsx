@@ -30,14 +30,14 @@ export function Section({
       // users without adding a tab stop for everyone else.
       tabIndex={-1}
       aria-labelledby={`${id}-heading`}
-      className={cn("scroll-mt-8 py-14 focus:outline-none", className)}
+      className={cn("scroll-mt-24 py-14 focus:outline-none", className)}
     >
       {/*
-       * Picked up by the GSAP scroll animations when that chunk loads. Inert
-       * otherwise: without JavaScript the header simply renders as-is.
-       */}
+        * Picked up by the GSAP scroll animations when that chunk loads. Inert
+        * otherwise: without JavaScript the header simply renders as-is.
+        */}
       <header data-reveal className="mb-6 space-y-1.5">
-        <h2 id={`${id}-heading`} className="text-2xl font-semibold tracking-tight">
+        <h2 id={`${id}-heading`} className="text-2xl font-semibold tracking-tight leading-[1.6]">
           {title}
         </h2>
         {subtitle && (

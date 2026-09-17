@@ -29,11 +29,12 @@ export function Hero() {
     <>
       <Navbar />
       <section
+        id="top"
         data-hero
         aria-labelledby="hero-heading"
-        className="relative flex min-h-svh items-center overflow-clip bg-linear-to-b from-background from-90% sm:from-80% to-transparent px-6 pt-28 pb-32 sm:pt-32 lg:pt-24"
+        className="relative flex min-h-svh items-center overflow-clip bg-linear-to-b from-background from-90% sm:from-80% to-transparent px-6 pt-28 pb-32 sm:pt-32 lg:pt-32"
       >
-        <div className="mx-auto grid w-full max-w-6xl items-center sm:gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8">
+        <div className="mx-auto grid w-full max-w-6xl items-center gap-10 sm:gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8">
           {/* Reading-start column: eyebrow, headline, support, CTAs. */}
           <div data-hero-content>
             <p
@@ -55,18 +56,18 @@ export function Hero() {
 
             <h1
               id="hero-heading"
-              className="text-4xl font-bold tracking-tight text-balance sm:text-5xl leading-[1.7]"
+              className="text-4xl font-bold tracking-tight text-balance sm:text-5xl leading-[1.35]"
             >
               {fa.home.heroHeadline.map((line, i) => (
                 // Mask: the line slides up from behind an overflow clip. The
                 // bottom padding keeps Persian diacritics from clipping.
-                <span key={line} className="block pb-1">
+                <span key={line} className="block pb-2 -mb-2">
                   <span
                     className="animate-hero-line block"
                     style={{ animationDelay: `${0.25 + i * 0.12}s` }}
                   >
                     {i === fa.home.heroHeadline.length - 1 ? (
-                      <span className="text-primary drop-shadow-[0_0_24px_var(--primary)] text-5xl sm:text-6xl pr-28">
+                      <span className="text-primary drop-shadow-[0_0_24px_var(--primary)] text-5xl sm:text-6xl">
                         {line}
                       </span>
                     ) : (
@@ -87,7 +88,7 @@ export function Hero() {
               <p
                 dir="ltr"
                 lang="en"
-                className="text-muted-foreground/80 font-mono text-xs tracking-wider"
+                className="text-muted-foreground font-mono text-xs tracking-wider"
               >
                 {fa.home.heroStack}
               </p>
@@ -104,14 +105,16 @@ export function Hero() {
                     {/* Forward in RTL points left; nudges further on hover. */}
                     <ArrowLeft
                       aria-hidden
-                      className="transition-transform duration-300 group-hover:-translate-x-1"
+                      className="size-4 transition-transform duration-300 group-hover:-translate-x-1"
                     />
                   </a>
                 </Button>
               </MagneticButton>
-              <Button size="lg" variant="outline" asChild>
-                <a href={`#${SECTION_IDS.contact}`}>{fa.home.heroCtaContact}</a>
-              </Button>
+              <MagneticButton>
+                <Button size="lg" variant="outline" asChild>
+                  <a href={`#${SECTION_IDS.contact}`}>{fa.home.heroCtaContact}</a>
+                </Button>
+              </MagneticButton>
             </div>
 
             <p
@@ -136,10 +139,10 @@ export function Hero() {
         <a
           href={`#${SECTION_IDS.projects}`}
           aria-label={fa.home.heroScroll}
-          className="animate-hero-fade focus-visible:ring-ring absolute bottom-6 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 rounded-full focus-visible:ring-2 focus-visible:outline-none sm:flex"
+          className="animate-hero-fade focus-visible:ring-ring absolute bottom-6 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 rounded-full focus-visible:ring-2 focus-visible:outline-none"
           style={{ animationDelay: "1.3s" }}
         >
-          <span className="text-muted-foreground text-[11px]">
+          <span className="text-muted-foreground text-xs">
             {fa.home.heroScroll}
           </span>
           <span className="bg-border relative block h-10 w-px overflow-hidden">

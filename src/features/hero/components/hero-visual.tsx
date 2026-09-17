@@ -65,7 +65,7 @@ function WorkspaceFallback() {
         className="overflow-x-auto p-5 font-mono text-[13px] leading-loose"
       >
         {fa.home.heroCode.map((line, i) => (
-          <div key={line} className="flex gap-4 whitespace-pre">
+          <span key={`${i}-${line}`} className="flex gap-4 whitespace-pre">
             <span
               aria-hidden
               className="text-muted-foreground/40 w-4 shrink-0 text-right select-none"
@@ -73,7 +73,7 @@ function WorkspaceFallback() {
               {i + 1}
             </span>
             <code className="text-foreground/85">{line}</code>
-          </div>
+          </span>
         ))}
       </pre>
     </div>
@@ -111,7 +111,7 @@ export function HeroVisual() {
       window.matchMedia("(pointer: fine)").matches,
   );
 
-  if (!threeDEnabled) return <WorkspaceFallback />;
+  if (!threeDEnabled || prefersReducedMotion) return <WorkspaceFallback />;
 
   return (
     <div

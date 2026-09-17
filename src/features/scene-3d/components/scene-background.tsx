@@ -1,86 +1,64 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { useTheme } from "next-themes";
 import { useState } from "react";
 
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
 import { useUiStore } from "@/lib/store/ui-store";
 
-import type { SceneScheme } from "./scene-canvas";
-
 /*
- * three.js and react-three-fiber stay out of the initial bundle behind this
- * dynamic import. The wrapper itself is a few lines and mounts in the layout;
- * the ~200KB of WebGL only downloads when the scene actually renders.
- */
-const SceneCanvas = dynamic(
-  () => import("./scene-canvas").then((module) => module.SceneCanvas),
-  { ssr: false },
-);
-
-/*
- * Concrete values because three.js takes colours, not CSS classes. Mapped from
- * the theme tokens: cyan-300/cyan-800 are the bright and deep ends of
- * --primary's cyan, teal-950 a near-black with a cyan cast for depth grading.
- * If the palette hue ever changes, this is the one place that follows it.
+ * Calm CSS aurora — the global background.
  *
- * Additive blending on a light page washes toward white, so the light scheme
- * composites normally with darker inks instead.
- */
-const SCENE_SCHEMES: Record<"dark" | "light", SceneScheme> = {
-  dark: {
-    bright: "#67e8f9",
-    deep: "#155e75",
-    opacity: 0.32,
-    lineOpacity: 0.045,
-    glowOpacity: 0.06,
-    additive: true,
-  },
-  light: {
-    bright: "#0e7490",
-    deep: "#67e8f9",
-    opacity: 0.24,
-    lineOpacity: 0.07,
-    glowOpacity: 0.04,
-    additive: false,
-  },
-};
-
-/**
- * Static gradient shown instead of the canvas.
+ * Replaces the former fullscreen WebGL particle field: two soft radial glows
+ * (cyan identity via theme tokens) faded toward the hero, plus an SVG grain
+ * at 4% for texture. Zero JS animation, zero bundle cost, free
+ * prefers-reduced-motion support. The constellation in skills-graph remains
+ * the single interactive sky: "calm reading, one playground."
  *
- * Covers reduced-motion users (no animation at all), save-data users (no
- * ~200KB download), and, should WebGL ever be unavailable, whatever remains.
- * It still carries the cyan identity in both modes through the theme tokens.
+ * `threeDEnabled` (terminal `3d --toggle`) still toggles this layer, so the
+ * command keeps a visible consumer. Reduced-motion / save-data visitors get
+ * the same static layer — there is no heavier variant to fall back from.
  */
-function GradientFallback() {
+function AuroraBackground({ calm }: { calm: boolean }) {
   return (
     <div
       aria-hidden
-      data-scene="fallback"
-      className="from-primary/10 dark:from-primary/15 pointer-events-none fixed inset-0 -z-10 bg-linear-to-b via-transparent to-transparent"
-    />
+      data-scene="aurora"
+      className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
+    >
+      {/* Base vertical wash, stronger near hero, transparent toward footer. */}
+      <div className="from-primary/[0.08] dark:from-primary/[0.12] absolute inset-0 bg-linear-to-b via-transparent to-transparent" />
+      {/* Cyan glow, reading-start side. */}
+      <div
+        className={
+          "bg-primary/[0.1] dark:bg-primary/[0.14] absolute -top-40 end-[-10%] h-[34rem] w-[34rem] rounded-full blur-3xl " +
+          (calm ? "" : "animate-hero-fade")
+        }
+      />
+      {/* Violet secondary glow, opposite corner, fainter. */}
+      <div className="absolute top-[30%] start-[-12%] h-[28rem] w-[28rem] rounded-full bg-violet-500/[0.07] blur-3xl dark:bg-violet-400/[0.1]" />
+      {/* Film grain for texture. */}
+      <div
+        className="absolute inset-0 opacity-[0.04] [mask-image:linear-gradient(to_bottom,black,transparent_70%)]"
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+        }}
+      />
+    </div>
   );
 }
 
 export function SceneBackground() {
   const threeDEnabled = useUiStore((state) => state.threeDEnabled);
-  const { resolvedTheme } = useTheme();
   // False through hydration (server snapshot), then the live value — so the
   // first client render matches the SSR HTML exactly.
   const prefersReducedMotion = usePrefersReducedMotion();
 
   /*
    * Read once in the initializer, not synced in an effect: the value never
-   * changes for the lifetime of the page, so there is nothing to subscribe to
-   * (and an effect that just sets state trips the setState-in-effect rule).
-   * Non-standard and Chromium-only, hence the guarded access — where it is
-   * absent there is simply no signal. One caveat: on the server this is always
-   * false, so a save-data visitor gets a hydration mismatch on this subtree
-   * and React reconciles to the fallback. No crash, no flash of canvas — just
-   * a dev-only warning for a rare cohort.
+   * changes for the lifetime of the page, so there is nothing to subscribe to.
+   * Non-standard and Chromium-only, hence the guarded access.
    */
   const [saveData] = useState(
     () =>
@@ -89,21 +67,8 @@ export function SceneBackground() {
         .connection?.saveData === true,
   );
 
-  // Driven by the terminal's `3d --toggle`, which has set this flag since
-  // step 2 — this component is the consumer that flag was waiting for.
+  // Driven by the terminal's `3d --toggle`.
   if (!threeDEnabled) return null;
-  if (prefersReducedMotion || saveData) return <GradientFallback />;
 
-  const scheme =
-    resolvedTheme === "light" ? SCENE_SCHEMES.light : SCENE_SCHEMES.dark;
-
-  return (
-    <div
-      aria-hidden
-      data-scene="canvas"
-      className="pointer-events-none fixed inset-0 -z-10"
-    >
-      <SceneCanvas scheme={scheme} />
-    </div>
-  );
+  return <AuroraBackground calm={prefersReducedMotion || saveData} />;
 }

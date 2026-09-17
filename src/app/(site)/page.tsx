@@ -68,9 +68,11 @@ async function CachedGithubStats() {
 export default function Home() {
   return (
     <>
-      {/* Full-viewport hero with its own wide container. */}
+      {/* Full-viewport hero with its own wide container.
+          Intentionally outside <main>: full-bleed landing + H1 lives here,
+          #main starts at the scannable content the skip link targets. */}
       <Hero />
-      <main id="main" className="flex-1">
+      <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
         {/* The project journey is a full-width stage — each project needs the
             horizontal room — so it sits outside the reading-measure wrapper the
             later sections use. The animator is loaded on its own so GSAP stays

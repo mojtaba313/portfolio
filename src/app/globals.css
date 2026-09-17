@@ -165,6 +165,9 @@
   }
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
+    /* Fixed pill navbar (~68-76px + mt-3) must not cover jumped-to headings. */
+    scroll-padding-top: 5.5rem;
   }
 }
 
