@@ -168,10 +168,11 @@ export function ConstellationCanvas({
     const runtime = new Map<string, Runtime>();
     const rand = mulberry(42);
     const fit = (): { width: number; dpr: number } => {
-      const dpr = Math.min(
-        window.devicePixelRatio || 1,
-        container.clientWidth < 560 ? 1.4 : 1.6,
-      );
+      /*
+       * DPR capped at 1.25: this is flat 2D vector work, and the extra
+       * backing pixels past 1.25 buy no visible sharpness — only fill rate.
+       */
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
       const width = container.clientWidth;
       canvas.width = Math.round(width * dpr);
       canvas.height = Math.round(CANVAS_HEIGHT * dpr);
@@ -539,12 +540,13 @@ export function ConstellationCanvas({
     const step = (now: number): void => {
       frame++;
       // Idle throttle: after the reveal, with no pointer and no focus, every
-      // second frame is plenty for twinkle and breathing.
+      // third frame is plenty for twinkle and breathing (~20fps motion on a
+      // calm background no one is looking at closely).
       const idle =
         (now - startTime) / 1000 > 2 &&
         !pointerActive &&
         focusId() === null;
-      if (!idle || frame % 2 === 0) {
+      if (!idle || frame % 3 === 0) {
         if (!staticLayout) {
           const pull = new Map<string, { x: number; y: number }>();
           for (const node of model.nodes) {
@@ -617,14 +619,25 @@ export function ConstellationCanvas({
       raf = 0;
     };
 
-    const onPointerMove = (event: PointerEvent): void => {
+    /*
+     * Pointer position via offsetX/Y, not getBoundingClientRect: the rect
+     * forces a synchronous layout on every mousemove, while the offsets are
+     * already relative to the canvas padding box (borderless, so identical
+     * basis). Falls back to the rect for any exotic target retargeting.
+     */
+    const toLocal = (event: PointerEvent | MouseEvent): { x: number; y: number } => {
+      if (event.target === canvas) {
+        return { x: event.offsetX, y: event.offsetY };
+      }
       const rect = canvas.getBoundingClientRect();
-      pointer = {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top,
-      };
+      return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+    };
+
+    const onPointerMove = (event: PointerEvent): void => {
+      const { x, y } = toLocal(event);
+      pointer = { x, y };
       pointerActive = true;
-      const id = pickNode(pointer.x, pointer.y);
+      const id = pickNode(x, y);
       if (id !== hoveredRef.current) {
         hoverCbRef.current(id);
         canvas.style.cursor = id ? "pointer" : "default";
@@ -638,11 +651,8 @@ export function ConstellationCanvas({
       canvas.style.cursor = "default";
     };
     const onClick = (event: PointerEvent): void => {
-      const rect = canvas.getBoundingClientRect();
-      const id = pickNode(
-        event.clientX - rect.left,
-        event.clientY - rect.top,
-      );
+      const { x, y } = toLocal(event);
+      const id = pickNode(x, y);
       if (id === null) {
         selectRef.current(null);
         return;

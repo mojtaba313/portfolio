@@ -8,6 +8,7 @@ import { Mouse } from "lucide-react";
 
 import { ProjectDetails } from "./project-details";
 import { ProjectPreview } from "./project-preview";
+import { ProjectRail } from "./project-rail";
 
 /**
  * Home-page projects section: a pinned, scroll-driven journey through the
@@ -26,7 +27,7 @@ export async function ProjectsSection() {
     <section
       id={SECTION_IDS.projects}
       aria-labelledby={`${SECTION_IDS.projects}-heading`}
-      className="relative scroll-mt-8"
+      className="relative scroll-mt-24"
     >
       {projects.length === 0 ? (
         <div className="mx-auto max-w-7xl px-6 py-32">
@@ -64,6 +65,14 @@ function DesktopStage({ projects }: { projects: ProjectJourneyItem[] }) {
         <div className="absolute right-[15%] top-[45%] size-75 rounded-full bg-cyan-400/5 blur-[120px]" />
       </div>
 
+      {/* Progress: thin bar tracking the scrubbed playhead. */}
+      <div aria-hidden className="absolute inset-x-0 top-0 z-20 h-0.5">
+        <div
+          data-project-progress
+          className="bg-primary ms-auto h-full w-0 shadow-[0_0_12px_var(--primary)]"
+        />
+      </div>
+
       {/* Header */}
       <header className="relative z-20 mx-auto flex max-w-375 flex-row-reverse justify-between px-6 lg:px-10">
         <div>
@@ -95,39 +104,15 @@ function DesktopStage({ projects }: { projects: ProjectJourneyItem[] }) {
         dir="ltr"
         className="relative mx-auto mt-8 grid h-[calc(100dvh-190px)] max-w-375 grid-cols-[170px_minmax(0,1fr)_340px] gap-8 px-6 lg:px-10"
       >
-        {/* Left rail */}
-        <aside className="relative flex flex-col justify-center">
-          <div className="flex items-start gap-5">
-            <div className="relative flex h-64 flex-col items-center justify-between py-1">
-              <div className="bg-border/50 absolute inset-y-0 w-px" />
-              {projects.map((project, index) => (
-                <span
-                  key={project.slug}
-                  data-project-dot
-                  className={`relative z-10 size-2.5 rounded-full border transition-all ${
-                    index === 0
-                      ? "border-background bg-primary shadow-[0_0_14px_var(--primary)]"
-                      : "border-background bg-muted-foreground/40"
-                  }`}
-                />
-              ))}
-            </div>
-
-            <div>
-              <div className="font-mono text-sm">
-                <span
-                  data-project-current
-                  className="text-primary"
-                >
-                  {pad(1)}
-                </span>
-                <span className="text-muted-foreground mx-2">/</span>
-                <span className="text-muted-foreground">
-                  {pad(projects.length)}
-                </span>
-              </div>
-            </div>
-          </div>
+        {/* Left rail: counter plus one jump button per project. Paints above
+            the preview column so long titles can never slide underneath it. */}
+        <aside className="relative z-10 flex flex-col justify-center">
+          <ProjectRail
+            projects={projects}
+            total={pad(projects.length)}
+            currentLabel={pad(1)}
+            counterSeparator={fa.journey.counterSeparator}
+          />
         </aside>
 
         {/* Project preview */}
@@ -179,10 +164,19 @@ function DesktopStage({ projects }: { projects: ProjectJourneyItem[] }) {
           ))}
         </aside>
 
-        {/* Bottom scroll indicator */}
-        <div className="text-muted-foreground absolute -bottom-10 left-1/2 flex -translate-x-1/2 items-center gap-3 text-xs">
-          <span className="from-primary h-8 w-px bg-linear-to-b to-transparent" />
-          <span>{fa.journey.scrollHint}</span>
+        {/* Bottom row: scroll hint + skip, inside the stage so the
+            overflow-hidden frame can never clip them. */}
+        <div className="absolute inset-x-0 bottom-5 z-20 flex items-center justify-center gap-6 text-xs">
+          <span className="text-muted-foreground flex items-center gap-3">
+            <span className="from-primary h-8 w-px bg-linear-to-b to-transparent" />
+            <span>{fa.journey.scrollHint}</span>
+          </span>
+          <a
+            href={`#${SECTION_IDS.skills}`}
+            className="text-muted-foreground hover:text-foreground rounded-full underline decoration-dotted underline-offset-4 transition-colors"
+          >
+            {fa.journey.skipJourney}
+          </a>
         </div>
       </div>
     </div>

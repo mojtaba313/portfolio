@@ -37,11 +37,11 @@ export function Footer() {
         className="mx-auto flex min-h-44 w-full max-w-6xl items-center justify-center px-6"
       />
 
-      {/* The only visible text in the footer. */}
-      <p
-        data-reveal
-        className="text-muted-foreground pb-12 text-center text-sm"
-      >
+      {/* The only visible text in the footer. No entrance animation by
+          design: this is the last line of the page, and a trigger-gated
+          reveal here once stayed stuck invisible when the journey pin
+          reshaped the document after the triggers were measured. */}
+      <p className="text-muted-foreground pb-12 text-center text-sm">
         {fa.footer.madeWith}{" "}
         <span aria-hidden className="text-primary">
           ♥

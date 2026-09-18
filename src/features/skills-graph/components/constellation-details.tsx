@@ -37,7 +37,7 @@ export function ConstellationDetails({
 
   if (!skill) {
     return (
-      <div className="flex h-full flex-col justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md">
+      <div className="flex h-full flex-col justify-center gap-2 rounded-2xl border border-black/10 bg-black/[0.03] p-5 backdrop-blur-md dark:border-white/10 dark:bg-white/[0.03]">
         <p className="text-sm font-medium">{fa.skills.detailsTitle}</p>
         <p className="text-muted-foreground text-xs leading-7">
           {fa.skills.detailsEmpty}
@@ -54,7 +54,7 @@ export function ConstellationDetails({
   return (
     <div
       aria-live="polite"
-      className="flex h-full flex-col gap-3 rounded-2xl border border-cyan-300/20 bg-cyan-300/[0.05] p-5 backdrop-blur-md"
+      className="flex h-full flex-col gap-3 rounded-2xl border border-cyan-700/25 bg-cyan-700/[0.06] p-5 backdrop-blur-md dark:border-cyan-300/20 dark:bg-cyan-300/[0.05]"
     >
       <div className="flex items-start justify-between gap-2">
         <p dir="ltr" lang="en" className="font-mono text-base font-semibold">
@@ -68,7 +68,7 @@ export function ConstellationDetails({
       </div>
 
       <div className="flex flex-wrap items-center gap-2 text-[11px]">
-        <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5">
+        <span className="rounded-full border border-black/10 bg-black/[0.04] px-2.5 py-0.5 dark:border-white/10 dark:bg-white/[0.04]">
           {CATEGORY_LABELS[skill.category] ?? skill.category}
         </span>
         {!pinned && (
@@ -118,10 +118,10 @@ export function ConstellationDetails({
               <li key={project.id}>
                 <Link
                   href={`/projects/${project.slug}`}
-                  className="group flex items-center justify-between gap-2 rounded-lg border border-white/[0.07] bg-white/[0.03] px-2.5 py-1.5 text-xs transition-colors hover:border-cyan-300/30 hover:bg-cyan-300/[0.07]"
+                  className="group flex items-center justify-between gap-2 rounded-lg border border-black/[0.08] bg-black/[0.03] px-2.5 py-1.5 text-xs transition-colors hover:border-cyan-700/30 hover:bg-cyan-700/[0.07] dark:border-white/[0.07] dark:bg-white/[0.03] dark:hover:border-cyan-300/30 dark:hover:bg-cyan-300/[0.07]"
                 >
                   <span className="truncate">{project.title}</span>
-                  <span className="text-muted-foreground shrink-0 text-[10px] group-hover:text-cyan-300">
+                  <span className="text-muted-foreground shrink-0 text-[10px] group-hover:text-cyan-700 dark:group-hover:text-cyan-300">
                     {fa.skills.viewProject} ←
                   </span>
                 </Link>

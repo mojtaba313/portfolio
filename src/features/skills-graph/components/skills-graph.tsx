@@ -49,7 +49,7 @@ function GraphSkeleton() {
     <div>
       <div
         aria-hidden
-        className="h-[460px] w-full animate-pulse rounded-2xl border border-white/10 bg-white/[0.03]"
+        className="h-[460px] w-full animate-pulse rounded-2xl border border-black/10 bg-black/[0.04] dark:border-white/10 dark:bg-white/[0.03]"
       />
       <p className="sr-only">{fa.skills.loading}</p>
     </div>
@@ -111,7 +111,7 @@ export function SkillsGraph({ data }: { data: GraphData }) {
           </p>
 
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_250px]">
-            <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#050a14] shadow-[0_0_60px_-20px_rgba(34,211,238,0.35)]">
+            <div className="overflow-hidden rounded-2xl border border-black/10 bg-white shadow-sm dark:border-white/10 dark:bg-[#050a14] dark:shadow-[0_0_60px_-20px_rgba(34,211,238,0.35)]">
               <ConstellationCanvas
                 data={data}
                 dark={resolvedTheme !== "light"}
@@ -211,8 +211,8 @@ function FilterChip({
       className={cn(
         "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition-colors",
         active
-          ? "border-cyan-300/40 bg-cyan-300/10 text-foreground"
-          : "border-white/10 bg-white/[0.02] text-muted-foreground hover:border-white/25 hover:text-foreground",
+          ? "border-cyan-700/40 bg-cyan-700/10 text-foreground dark:border-cyan-300/40 dark:bg-cyan-300/10"
+          : "border-black/10 bg-black/[0.02] text-muted-foreground hover:border-black/25 hover:text-foreground dark:border-white/10 dark:bg-white/[0.02] dark:hover:border-white/25",
       )}
     >
       {dotClass && (

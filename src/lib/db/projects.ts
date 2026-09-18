@@ -161,8 +161,7 @@ export async function getPublishedProjects(): Promise<ProjectNode[]> {
   return rows;
 }
 
-/** One project by slug, or null when it does not exist or is not published. */
-export async function getProjectBySlug(
+/** One project by slug, or null when it does not exist or is not published. */export async function getProjectBySlug(
   slug: string,
 ): Promise<ProjectDetail | null> {
   const row = await prisma.project.findFirst({
@@ -220,6 +219,34 @@ export async function getPublishedProjectSlugs(): Promise<string[]> {
     select: { slug: true },
   });
   return rows.map((row) => row.slug);
+}
+
+/**
+ * Previous / next project around a slug, in journey order.
+ *
+ * Same ordering as `getProjectJourney` (featured, newest, manual tiebreaker)
+ * so "next" on the case-study page agrees with the home-page showcase. Only
+ * slugs and titles cross — the pages read their own bodies.
+ */
+export async function getProjectNeighbors(
+  slug: string,
+): Promise<{ prev: { slug: string; title: string } | null; next: { slug: string; title: string } | null }> {
+  const rows = await prisma.project.findMany({
+    where: { status: "PUBLISHED" },
+    orderBy: [
+      { featured: "desc" },
+      { completedAt: "desc" },
+      { displayOrder: "asc" },
+    ],
+    select: { slug: true, title: true },
+  });
+
+  const index = rows.findIndex((row) => row.slug === slug);
+  if (index === -1) return { prev: null, next: null };
+  return {
+    prev: index > 0 ? rows[index - 1] : null,
+    next: index < rows.length - 1 ? rows[index + 1] : null,
+  };
 }
 
 /**

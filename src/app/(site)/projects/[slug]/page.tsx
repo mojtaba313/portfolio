@@ -1,4 +1,4 @@
-import { ArrowRight, Code, ExternalLink } from "lucide-react";
+import { ArrowLeft, ArrowRight, Code, ExternalLink } from "lucide-react";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -7,12 +7,15 @@ import { Suspense } from "react";
 import { SkillBadge } from "@/components/project-card";
 import { Button } from "@/components/ui/button";
 import { fa } from "@/content/fa";
+import { ProjectCoverImage } from "@/features/projects/components/project-preview";
 import {
   getProjectBySlug,
+  getProjectNeighbors,
   getPublishedProjectSlugs,
   type ProjectDetail,
 } from "@/lib/db/projects";
 import { formatJalaliMonth, toIsoDate } from "@/lib/format-date";
+import { SECTION_IDS } from "@/lib/sections";
 
 /**
  * Cached single-project read.
@@ -28,6 +31,17 @@ async function getCachedProject(slug: string): Promise<ProjectDetail | null> {
   cacheTag("projects", `project:${slug}`);
 
   return getProjectBySlug(slug);
+}
+
+/**
+ * Neighbor links, cached per slug like the body itself.
+ */
+async function getCachedNeighbors(slug: string) {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("projects", `project:${slug}:neighbors`);
+
+  return getProjectNeighbors(slug);
 }
 
 /**
@@ -101,7 +115,7 @@ export async function generateMetadata({ params }: PageProps<"/projects/[slug]">
  */
 function ProjectSkeleton() {
   return (
-    <div className="space-y-8" aria-hidden>
+    <div className="space-y-8" role="status" aria-label={fa.common.loading}>
       <div className="space-y-3">
         <div className="bg-muted h-10 w-2/3 rounded-lg animate-pulse" />
         <div className="bg-muted h-6 w-full rounded-lg animate-pulse" />
@@ -111,6 +125,7 @@ function ProjectSkeleton() {
         <div className="bg-muted h-4 w-full rounded animate-pulse" />
         <div className="bg-muted h-4 w-5/6 rounded animate-pulse" />
       </div>
+      <span className="sr-only">{fa.common.loading}</span>
     </div>
   );
 }
@@ -126,7 +141,10 @@ async function ProjectBody({
   params,
 }: Pick<PageProps<"/projects/[slug]">, "params">) {
   const { slug } = await params;
-  const project = await getCachedProject(slug);
+  const [project, neighbors] = await Promise.all([
+    getCachedProject(slug),
+    getCachedNeighbors(slug),
+  ]);
 
   // Covers both a genuinely missing slug and a draft/archived one, since the
   // repository query filters on status.
@@ -135,13 +153,34 @@ async function ProjectBody({
   return (
     <article className="space-y-8">
       <header className="space-y-3">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+        {(project.client || project.completedAt) && (
+          <p className="text-muted-foreground text-xs">
+            {project.client}
+            {project.client && project.completedAt && " • "}
+            {project.completedAt && (
+              <time dateTime={toIsoDate(project.completedAt)}>
+                {formatJalaliMonth(project.completedAt)}
+              </time>
+            )}
+          </p>
+        )}
+        <h1 className="text-3xl font-bold tracking-tight text-balance sm:text-4xl">
           {project.title}
         </h1>
         <p className="text-muted-foreground text-lg text-balance">
           {project.summary}
         </p>
       </header>
+
+      {project.coverImage && (
+        <div className="border-border/40 relative aspect-16/9 overflow-hidden rounded-2xl border">
+          <ProjectCoverImage
+            project={project}
+            sizes="(min-width: 768px) 768px, 100vw"
+            eager
+          />
+        </div>
+      )}
 
       {(project.liveUrl || project.repoUrl) && (
         <div className="flex flex-wrap gap-3">
@@ -165,6 +204,16 @@ async function ProjectBody({
               </a>
             </Button>
           )}
+        </div>
+      )}
+
+      {!project.liveUrl && !project.repoUrl && (
+        <div>
+          <Button variant="outline" asChild>
+            <Link href={`/#${SECTION_IDS.contact}`}>
+              {fa.contact.startConversation}
+            </Link>
+          </Button>
         </div>
       )}
 
@@ -223,6 +272,44 @@ async function ProjectBody({
           </ul>
         </section>
       )}
+
+      {(neighbors.prev || neighbors.next) && (
+        <nav
+          aria-label="ناوبری پروژه‌ها"
+          className="border-border flex items-center justify-between gap-3 border-t pt-6"
+        >
+          {neighbors.prev ? (
+            <Button variant="ghost" size="sm" asChild>
+              <Link href={`/projects/${neighbors.prev.slug}`}>
+                {/* Right points back in RTL. */}
+                <ArrowRight aria-hidden />
+                <span className="flex flex-col items-start gap-0.5">
+                  <span className="text-muted-foreground text-[11px]">
+                    {fa.project.prevProject}
+                  </span>
+                  <span className="text-sm">{neighbors.prev.title}</span>
+                </span>
+              </Link>
+            </Button>
+          ) : (
+            <span />
+          )}
+          {neighbors.next && (
+            <Button variant="ghost" size="sm" asChild>
+              <Link href={`/projects/${neighbors.next.slug}`}>
+                <span className="flex flex-col items-end gap-0.5">
+                  <span className="text-muted-foreground text-[11px]">
+                    {fa.project.nextProject}
+                  </span>
+                  <span className="text-sm">{neighbors.next.title}</span>
+                </span>
+                {/* Left points forward in RTL. */}
+                <ArrowLeft aria-hidden />
+              </Link>
+            </Button>
+          )}
+        </nav>
+      )}
     </article>
   );
 }
@@ -248,7 +335,7 @@ export default function ProjectPage({ params }: PageProps<"/projects/[slug]">) {
   return (
     <main id="main" className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
       <Button variant="ghost" size="sm" asChild className="mb-8">
-        <Link href="/">
+        <Link href={`/#${SECTION_IDS.projects}`}>
           {/* The arrow points right, which in RTL is "back". Mirroring it would
               point it away from the direction of travel. */}
           <ArrowRight aria-hidden />

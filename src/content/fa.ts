@@ -127,7 +127,9 @@ export const fa = {
     /** Verb-led so it reads naturally next to a project title. */
     viewLive: "مشاهدهٔ سایت",
     viewRepo: "کد منبع",
-    backToProjects: "بازگشت به پروژهها",
+    backToProjects: "بازگشت به پروژه‌ها",
+    prevProject: "پروژهٔ قبلی",
+    nextProject: "پروژهٔ بعدی",
     client: "کارفرما",
     completedAt: "تاریخ انجام",
     skillsUsed: "فناوریهای بهکاررفته",
@@ -156,6 +158,8 @@ export const fa = {
     openProject: "مشاهده پروژه",
     /** Scroll hint shown at the bottom-left of the stage. */
     scrollHint: "اسکرول کنید",
+    /** Skips the pinned showcase to the next section. */
+    skipJourney: "گذر از پروژه‌ها",
     empty: "هنوز پروژهای برای نمایش وجود ندارد.",
   },
 
