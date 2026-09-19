@@ -166,8 +166,16 @@ export const fa = {
   contact: {
     name: "نام",
     email: "ایمیل یا شماره تماس",
+    /** Helper under the email-or-phone field. */
+    contactHint: "ایمیل یا شماره موبایل — هر کدوم که به نظرتون سریع تره.",
     subject: "موضوع",
+    /** Shown next to labels of optional fields. */
+    optional: "(اختیاری)",
     message: "پیام",
+    /** Message length counter, e.g. "۱۲۳ / ۴۰۰۰". */
+    messageCounter: (used: string, max: string) => `${used} / ${max}`,
+    /** Max-length hint wired into the message description. */
+    messageMaxHint: (max: string) => `حداکثر ${max} نویسه`,
     submit: "ارسال پیام",
     sending: "در حال ارسال…",
     success: "پیام شما ارسال شد. به‌زودی پاسخ می‌دهم.",
@@ -179,12 +187,18 @@ export const fa = {
       "برای همکاری یا پیشنهاد شغلی پیام بدهید. هر پیام مستقیم به دست خودم می‌رسد.",
     /** Availability badge next to the headline. */
     available: "آماده همکاری",
+    /** Response promise + working location, shown under the invitation. */
+    responseTime: "معمولاً در کمتر از ۲۴ ساعت پاسخ می‌دهم",
+    location: "تهران، ایران",
+    /** Privacy reassurance next to the submit button. */
+    privacyNote: "نشانی شما فقط برای پاسخ به همین پیام استفاده می‌شود.",
     /** Primary magnetic CTA: focuses the form below. */
     startConversation: "شروع گفتگو",
     /** Direct-email row. */
     emailMe: "ایمیل مستقیم",
     copyEmail: "کپی ایمیل",
     emailCopied: "کپی شد",
+    copyFailed: "کپی نشد — لطفاً دستی انتخاب کنید",
     /** Social rows. Labels stay Latin — they are service names. */
     findMe: "جای دیگری هم هستم",
     /** Quiet heading above the form itself. */

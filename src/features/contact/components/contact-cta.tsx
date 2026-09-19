@@ -9,14 +9,16 @@ import { Magnetic } from "./magnetic";
 /**
  * Magnetic primary CTA for the finale.
  *
- * Activating scrolls to the form and focuses the message field: the CTA's UX
- * purpose is to start the conversation, not to navigate somewhere.
+ * Activating scrolls to the form and focuses the name field: the CTA's UX
+ * purpose is to start the conversation, and a conversation starts at the
+ * top — focusing the middle field would skip name and contact info and
+ * break tab order for keyboard users.
  */
 export function ContactCta({ label }: { label: string }) {
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const handleClick = (): void => {
-    const field = document.getElementById("message");
+    const field = document.getElementById("name");
     field?.scrollIntoView({
       behavior: prefersReducedMotion ? "auto" : "smooth",
       block: "center",

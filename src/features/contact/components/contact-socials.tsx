@@ -1,4 +1,4 @@
-import { Briefcase, GitBranch, Mail, Send } from "lucide-react";
+import { Code, Contact, Mail, Send } from "lucide-react";
 
 import { fa, site } from "@/content/fa";
 
@@ -11,8 +11,8 @@ import { Magnetic } from "./magnetic";
  * Rendered **below** the form: the invitation funnels to the form first, and
  * these are the quiet alternative for visitors who would rather reach out
  * directly. This lucide version ships no brand icons (removed upstream), so
- * each channel gets the closest honest metaphor instead of a wrong glyph: the
- * paper plane for Telegram, a git branch for GitHub, a briefcase for
+ * each channel gets an honest functional mark instead of a wrong metaphor:
+ * the paper plane for Telegram, source code for GitHub, an address card for
  * LinkedIn, an envelope for email. Names stay Latin mono next to the mark.
  * Every entry is optional — unconfigured channels are omitted rather than
  * linked somewhere dead (see `site.contact`).
@@ -22,13 +22,13 @@ const SOCIALS: {
   name: string;
   Icon: typeof Mail;
 }[] = [
-  { key: "github", name: "GitHub", Icon: GitBranch },
-  { key: "linkedin", name: "LinkedIn", Icon: Briefcase },
+  { key: "github", name: "GitHub", Icon: Code },
+  { key: "linkedin", name: "LinkedIn", Icon: Contact },
   { key: "telegram", name: "Telegram", Icon: Send },
 ];
 
 const PILL_CLASS =
-  "inline-flex h-12 items-center gap-2.5 rounded-full border border-border/70 bg-white/[0.02] px-5 font-mono text-sm transition-all duration-300 outline-none hover:-translate-y-0.5 hover:border-cyan-300/50 hover:text-cyan-200 hover:shadow-[0_0_28px_-8px_var(--primary)] focus-visible:ring-2 focus-visible:ring-ring";
+  "inline-flex h-12 items-center gap-2.5 rounded-full border border-border/70 bg-white/[0.02] px-5 font-mono text-sm transition-all duration-300 outline-none hover:-translate-y-0.5 hover:border-cyan-700/50 hover:text-cyan-700 hover:shadow-[0_0_28px_-8px_var(--primary)] focus-visible:ring-2 focus-visible:ring-ring dark:hover:border-cyan-300/50 dark:hover:text-cyan-200";
 
 export function ContactSocials() {
   const { email, ...profiles } = site.contact;
@@ -47,7 +47,7 @@ export function ContactSocials() {
             <a
               href={profiles[key]}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className={PILL_CLASS}
             >
               <Icon aria-hidden className="size-4.5" />
@@ -69,11 +69,11 @@ export function ContactSocials() {
           </Magnetic>
         )}
 
+        {/* Copy action at the same 48px target as the pills — the button
+            renders its own pill with a text label that swaps to the outcome. */}
         {email && (
-          <Magnetic strength={0.45}>
-            <span className="inline-flex size-12 items-center justify-center rounded-full border border-border/70 bg-white/[0.02] transition-colors duration-300 hover:border-cyan-300/50">
-              <CopyEmailButton email={email} />
-            </span>
+          <Magnetic strength={0.35}>
+            <CopyEmailButton email={email} />
           </Magnetic>
         )}
       </div>

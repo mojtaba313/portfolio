@@ -37,6 +37,13 @@ import { Magnetic } from "./magnetic";
 export function ContactForm() {
   /** Outcome of the last submit; null before the first attempt. */
   const [result, setResult] = useState<ContactResult | null>(null);
+  /*
+   * Message length for the counter. Tracked alongside RHF (not via its
+   * `watch()`, which the React Compiler refuses to memoize) — the register
+   * onChange below runs next to RHF's own handler, and success resets it
+   * with the form.
+   */
+  const [messageLength, setMessageLength] = useState(0);
 
   const {
     register,
@@ -44,19 +51,25 @@ export function ContactForm() {
     reset,
     setError,
     formState: { errors, isSubmitting },
-  /*
-   * Three generics, not one: the schema's `subject` transform turns "" into null,
-   * so the parsed output type differs from the form's input type. RHF models that
-   * with <TFieldValues, TContext, TTransformedValues> — without the third,
-   * zodResolver's output does not typecheck against the form values, and
-   * handleSubmit would hand the action untransformed data.
-   */
+    /*
+     * Three generics, not one: the schema's `subject` transform turns "" into null,
+     * so the parsed output type differs from the form's input type. RHF models that
+     * with <TFieldValues, TContext, TTransformedValues> — without the third,
+     * zodResolver's output does not typecheck against the form values, and
+     * handleSubmit would hand the action untransformed data.
+     */
   } = useForm<ContactInput, unknown, ContactData>({
     resolver: zodResolver(contactSchema),
     // Validate as fields are left rather than on every keystroke: mid-typing
     // "contact is invalid" on a half-entered address is noise, not help.
     mode: "onBlur",
-    defaultValues: { name: "", email: "", subject: "", message: "", botField: "" },
+    defaultValues: {
+      name: "",
+      email: "",
+      subject: "",
+      message: "",
+      botField: "",
+    },
   });
 
   // Receives the *parsed* values, so `subject` is already null rather than "".
@@ -66,6 +79,7 @@ export function ContactForm() {
 
     if (outcome.status === "success") {
       reset();
+      setMessageLength(0);
       return;
     }
 
@@ -121,7 +135,6 @@ export function ContactForm() {
             maxLength={CONTACT_LIMITS.nameMax}
             autoComplete="name"
             aria-invalid={!!errors.name}
-            
             className={FIELD_CLASS}
             {...register("name")}
           />
@@ -131,37 +144,42 @@ export function ContactForm() {
           id="email"
           label={fa.contact.email}
           error={errors.email?.message}
+          hint={fa.contact.contactHint}
           required
         >
           {/*
-            * dir="ltr" because the value is Latin either way: inside an RTL
-            * field the bidi algorithm moves the leading "@" of an email — or
-            * the leading "+" of a phone number — to the wrong end while
-            * typing, which looks broken even though the value is fine.
-            * type="text" (not "email") so mobile keyboards and native
-            * validation don't assume the value is always an address; the Zod
-            * schema above is the only validator. No autoComplete token covers
-            * an either-or field, so none is set rather than a misleading one.
-            */}
+           * dir="ltr" because the value is Latin either way: inside an RTL
+           * field the bidi algorithm moves the leading "@" of an email — or
+           * the leading "+" of a phone number — to the wrong end while
+           * typing, which looks broken even though the value is fine.
+           * type="text" (not "email") so mobile keyboards and native
+           * validation don't assume the value is always an address; the Zod
+           * schema above is the only validator. No autoComplete token covers
+           * an either-or field, so none is set rather than a misleading one.
+           */}
           <Input
             id="email"
             type="text"
             dir="ltr"
             autoComplete="off"
+            inputMode="email"
             aria-invalid={!!errors.email}
-            
+            placeholder="you@example.com / 09***"
             className={FIELD_CLASS}
             {...register("email")}
           />
         </Field>
       </div>
 
-      <Field id="subject" label={fa.contact.subject} error={errors.subject?.message}>
+      <Field
+        id="subject"
+        label={fa.contact.subject}
+        error={errors.subject?.message}
+      >
         <Input
           id="subject"
           maxLength={CONTACT_LIMITS.subjectMax}
           aria-invalid={!!errors.subject}
-          
           className={FIELD_CLASS}
           {...register("subject")}
         />
@@ -171,17 +189,42 @@ export function ContactForm() {
         id="message"
         label={fa.contact.message}
         error={errors.message?.message}
+        hint={fa.contact.messageMaxHint(
+          CONTACT_LIMITS.messageMax.toLocaleString("fa-IR"),
+        )}
         required
       >
-        <Textarea
-          id="message"
-          rows={5}
-          maxLength={CONTACT_LIMITS.messageMax}
-          aria-invalid={!!errors.message}
-          
-          className={FIELD_CLASS}
-          {...register("message")}
-        />
+        <div className="relative">
+          <Textarea
+            id="message"
+            rows={5}
+            maxLength={CONTACT_LIMITS.messageMax}
+            aria-invalid={!!errors.message}
+            // Same ids Field assigns (hint + error): the wrapper div, not
+            // the control, is Field's direct child here.
+            aria-describedby={`message-hint${errors.message ? " message-error" : ""}`}
+            className={TEXTAREA_CLASS}
+            {...register("message", {
+              onChange: (event) => setMessageLength(event.target.value.length),
+            })}
+          />
+          {/*
+           * Length counter, visual only (aria-hidden): announcing every
+           * keystroke would be noise, and the max is already in the hint
+           * screen readers hear once via aria-describedby. Pinned to the
+           * starting corner so it never collides with the native resize
+           * grip at the ending corner.
+           */}
+          <p
+            aria-hidden
+            className="text-muted-foreground pointer-events-none absolute bottom-3 start-4 text-[11px] tabular-nums"
+          >
+            {fa.contact.messageCounter(
+              messageLength.toLocaleString("fa-IR"),
+              CONTACT_LIMITS.messageMax.toLocaleString("fa-IR"),
+            )}
+          </p>
+        </div>
       </Field>
 
       <div className="flex flex-wrap items-center gap-4">
@@ -227,6 +270,10 @@ export function ContactForm() {
           </p>
         )}
       </div>
+
+      <p className="text-xs text-muted-foreground/80">
+        {fa.contact.privacyNote}
+      </p>
     </form>
   );
 }
@@ -245,45 +292,86 @@ export function ContactForm() {
 const FIELD_CLASS =
   "h-13 rounded-xl border-border/70 bg-white/[0.02] px-4 text-base transition-all duration-300 placeholder:text-muted-foreground/50 hover:border-foreground/25 focus-visible:border-cyan-300/60 focus-visible:ring-0 focus-visible:shadow-[0_0_0_3px_rgba(34,211,238,0.12)] dark:bg-white/[0.03]";
 
+/*
+ * Textarea twin of FIELD_CLASS without the fixed h-13 (which collapsed
+ * rows={5} into a single-line box): auto height from rows, a floor that
+ * fits, and bottom room for the length counter overlay.
+ */
+const TEXTAREA_CLASS =
+  "min-h-36 resize-y rounded-xl border-border/70 bg-white/[0.02] px-4 py-3.5 pb-9 text-base transition-colors duration-300 placeholder:text-muted-foreground/50 hover:border-foreground/25 focus-visible:border-cyan-300/60 focus-visible:ring-0 focus-visible:shadow-[0_0_0_3px_rgba(34,211,238,0.12)] dark:bg-white/[0.03]";
+
 /**
- * Label + control + error message, wired together.
+ * Label + hint + control + error message, wired together.
  *
- * Exists so every field gets `aria-describedby` pointing at its error and the
- * label is actually associated with the control — the parts that are easy to
- * forget when each field is written out by hand.
+ * Every field gets `aria-describedby` pointing at its hint and/or error, the
+ * label is associated with the control, and required state is exposed both
+ * visually (`*`) and programmatically (`required` + `aria-required`) — a
+ * screen reader learns a field is required before submitting, not after.
+ * Optional fields say so inline; no one has to guess.
  */
 function Field({
   id,
   label,
   error,
+  hint,
   required,
   children,
 }: {
   id: string;
   label: string;
   error?: string;
+  hint?: string;
   required?: boolean;
   children: React.ReactNode;
 }) {
   const errorId = `${id}-error`;
+  const hintId = `${id}-hint`;
+  const describedBy = [hint ? hintId : null, error ? errorId : null]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div className="space-y-2">
-      <Label htmlFor={id} className="text-muted-foreground text-xs font-normal">
+      <Label
+        htmlFor={id}
+        className="text-[13px] font-medium text-foreground/80"
+      >
         {label}
-        {required && (
+        {required ? (
           <span aria-hidden className="text-destructive">
             *
+          </span>
+        ) : (
+          <span className="font-normal text-muted-foreground/70">
+            {fa.contact.optional}
           </span>
         )}
       </Label>
 
-      {/* Cloned rather than asking each call site to repeat aria-describedby. */}
-      {React.isValidElement<{ "aria-describedby"?: string }>(children)
+      {/* Cloned rather than asking each call site to repeat its wiring.
+          Required state lands on real form controls only — never on a
+          wrapper div. */}
+      {React.isValidElement<{
+        "aria-describedby"?: string;
+        "aria-required"?: boolean;
+        required?: boolean;
+      }>(children)
         ? React.cloneElement(children, {
-            "aria-describedby": error ? errorId : undefined,
+            "aria-describedby": describedBy || undefined,
+            ...(children.type === Input || children.type === Textarea
+              ? {
+                  "aria-required": required ? true : undefined,
+                  required: required ? true : undefined,
+                }
+              : {}),
           })
         : children}
+
+      {hint && (
+        <p id={hintId} className="text-xs text-muted-foreground">
+          {hint}
+        </p>
+      )}
 
       {error && (
         <p id={errorId} className="text-destructive text-xs">

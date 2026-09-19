@@ -81,6 +81,17 @@ export function ContactFinale() {
           {fa.contact.finaleSub}
         </p>
 
+        <p
+          data-reveal
+          className="text-muted-foreground/80 mx-auto mt-3 text-xs"
+        >
+          {fa.contact.responseTime}
+          <span aria-hidden className="mx-2">
+            •
+          </span>
+          {fa.contact.location}
+        </p>
+
         <div data-reveal className="mt-9">
           <ContactCta label={fa.contact.startConversation} />
         </div>
