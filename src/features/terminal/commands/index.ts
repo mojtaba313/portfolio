@@ -1,9 +1,20 @@
+import { aboutCommand } from "./about";
+import { bannerCommand } from "./banner";
 import { clearCommand } from "./clear";
+import { contactCommand } from "./contact";
+import { echoCommand } from "./echo";
+import { exitCommand, quitCommand } from "./exit";
 import { githubCommand } from "./github";
 import { helpCommand } from "./help";
+import { hireCommand } from "./hire";
+import { jokeCommand } from "./joke";
+import { openCommand } from "./open";
+import { rmCommand } from "./rm";
 import { skillsCommand } from "./skills";
+import { sudoCommand } from "./sudo";
 import { themeCommand } from "./theme";
 import { threeDCommand } from "./three-d";
+import { whoamiCommand } from "./whoami";
 import type { Command } from "./types";
 
 /**
@@ -15,10 +26,22 @@ import type { Command } from "./types";
  */
 export const COMMANDS: readonly Command[] = [
   helpCommand,
+  whoamiCommand,
+  aboutCommand,
+  openCommand,
   skillsCommand,
   githubCommand,
+  contactCommand,
+  hireCommand,
+  bannerCommand,
+  echoCommand,
   themeCommand,
   threeDCommand,
+  jokeCommand,
+  sudoCommand,
+  rmCommand,
+  exitCommand,
+  quitCommand,
   clearCommand,
 ];
 

@@ -20,6 +20,11 @@ export type Command = {
   readonly description: string;
   /** Shown by `help` and when arguments don't parse. */
   readonly usage?: string;
+  /**
+   * Hidden commands still run (and complete) but `help` doesn't list them —
+   * for aliases like `quit` that would otherwise double the noise.
+   */
+  readonly hidden?: boolean;
   run(args: readonly string[], ctx: CommandContext): void | Promise<void>;
 };
 

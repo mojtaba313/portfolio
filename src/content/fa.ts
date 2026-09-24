@@ -210,6 +210,8 @@ export const fa = {
         separately in primary, and the name links to GitHub. */
     madeWith: "ساخته شده با",
     by: "توسط",
+    /** Back-to-top button. */
+    backToTop: "بازگشت به بالا",
   },
 
   skills: {
