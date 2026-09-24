@@ -7,15 +7,16 @@ export const helpCommand: Command = {
     /*
      * Left column is padded to the widest label so the descriptions line up.
      * Computed rather than hardcoded — a new command with a long usage string
-     * shouldn't quietly break the alignment.
+     * shouldn't quietly break the alignment. Hidden aliases stay out.
      */
-    const labels = ctx.commands.map((c) => c.usage ?? c.name);
+    const visible = ctx.commands.filter((c) => !c.hidden);
+    const labels = visible.map((c) => c.usage ?? c.name);
     const width = Math.max(...labels.map((l) => l.length));
 
     ctx.printMany([
       { kind: "output", text: "Available commands:" },
       { kind: "output", text: "" },
-      ...ctx.commands.map((command, i) => ({
+      ...visible.map((command, i) => ({
         kind: "output" as const,
         text: `  ${labels[i]!.padEnd(width)}  ${command.description}`,
       })),

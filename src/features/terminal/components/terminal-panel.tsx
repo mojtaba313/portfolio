@@ -288,7 +288,7 @@ export function TerminalPanel({ onRequestClose }: TerminalPanelProps) {
      * stays on the compositor instead of triggering layout every frame.
      */
     <motion.div
-      className="fixed inset-x-0 bottom-0 z-40"
+      className="fixed inset-x-0 bottom-0 z-40 pb-[env(safe-area-inset-bottom)]"
       initial={{ y: "100%" }}
       animate={{ y: 0 }}
       exit={{ y: "100%" }}
@@ -321,9 +321,9 @@ export function TerminalPanel({ onRequestClose }: TerminalPanelProps) {
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
           onKeyDown={handleKeyDown}
-          className="group focus-visible:ring-ring absolute inset-x-0 -top-1 z-10 flex h-2 cursor-ns-resize touch-none items-center justify-center focus-visible:ring-2 focus-visible:outline-none"
+          className="group focus-visible:ring-ring absolute inset-x-0 -top-1.5 z-10 flex h-3 cursor-ns-resize touch-none items-center justify-center focus-visible:ring-2 focus-visible:outline-none"
         >
-          <span className="bg-border group-hover:bg-primary h-0.5 w-12 rounded-full transition-colors" />
+          <span className="bg-border group-hover:bg-primary h-1 w-12 rounded-full transition-colors" />
         </div>
 
         {/* Persian chrome: title bar. Inherits the document's RTL direction. */}
@@ -360,37 +360,67 @@ export function TerminalPanel({ onRequestClose }: TerminalPanelProps) {
             aria-label="Terminal output"
             className="flex-1 overflow-y-auto px-3 py-2"
             tabIndex={0}
+            onClick={() => {
+              // Clicking the log focuses the prompt — terminal behavior —
+              // unless the user is selecting text, which must not be stolen.
+              if (window.getSelection()?.isCollapsed) inputRef.current?.focus();
+            }}
           >
-            {lines.length === 0 ? (
-              <p className="text-muted-foreground">
-                Type <span className="text-primary">help</span> to get started.
-              </p>
-            ) : (
-              lines.map((line) => (
-                <div
-                  key={line.id}
-                  className={cn(
-                    "whitespace-pre-wrap break-words",
-                    line.kind === "error" && "text-destructive",
-                    line.kind === "muted" && "text-muted-foreground",
-                    line.kind === "output" && "text-foreground",
-                    line.kind === "input" && "text-foreground",
+            {lines.length === 0 && (
+              <div className="space-y-2 pb-2">
+                <p className="text-muted-foreground">
+                  Type <span className="text-primary">help</span> to get
+                  started — or try one:
+                </p>
+                {/* One-tap onboarding: no guessing, no typing. */}
+                <div className="flex flex-wrap gap-1.5">
+                  {["about", "open projects", "contact", "sudo"].map(
+                    (name) => (
+                      <button
+                        key={name}
+                        type="button"
+                        onClick={() => runInput(name)}
+                        className="border-border text-muted-foreground hover:text-foreground hover:border-primary/50 rounded-md border px-2 py-0.5 font-mono text-xs transition-colors"
+                      >
+                        {name}
+                      </button>
+                    ),
                   )}
-                >
-                  {line.kind === "input" && (
-                    <span className="text-primary select-none">$ </span>
-                  )}
-                  {line.text}
                 </div>
-              ))
+              </div>
             )}
-          </div>
+            {lines.map((line) => (
+              <div
+                key={line.id}
+                className={cn(
+                  "whitespace-pre-wrap break-words",
+                  line.kind === "error" && "text-destructive",
+                  line.kind === "muted" && "text-muted-foreground",
+                  line.kind === "output" && "text-foreground",
+                  line.kind === "input" && "font-medium text-foreground",
+                )}
+              >
+                {line.kind === "input" && (
+                  <span className="text-primary select-none">$ </span>
+                )}
+                {line.text}
+              </div>
+            ))}
 
-          {/* Prompt */}
-          <div className="border-border flex shrink-0 items-center gap-2 border-t px-3 py-2">
-            <span aria-hidden className="text-primary select-none">
-              $
-            </span>
+            {/*
+             * The prompt lives inline at the end of the scrollback — a shell
+             * row flowing after the last output, never a bar pinned to the
+             * container. The block caret (colored line-caret fallback where
+             * unsupported) is what makes it read as a terminal.
+             */}
+            <div className="flex items-center gap-2 pt-1">
+              <span aria-hidden className="shrink-0 select-none">
+                <span className="text-muted-foreground">guest</span>
+                <span className="text-muted-foreground">@</span>
+                <span className="text-foreground">mojtaba.dev</span>
+                <span className="text-muted-foreground">:</span>
+                <span className="text-primary">~$</span>
+              </span>
             <input
               ref={inputRef}
               value={draft}
@@ -403,9 +433,10 @@ export function TerminalPanel({ onRequestClose }: TerminalPanelProps) {
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck={false}
-              className="placeholder:text-muted-foreground/60 min-w-0 flex-1 bg-transparent outline-none"
+              className="placeholder:text-muted-foreground/60 caret-primary min-w-0 flex-1 bg-transparent font-mono outline-none [caret-shape:block]"
               placeholder="help"
             />
+            </div>
           </div>
         </div>
       </div>

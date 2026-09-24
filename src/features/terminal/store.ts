@@ -21,6 +21,13 @@ export const TERMINAL_DEFAULT_HEIGHT = 320;
 const MAX_INPUT_HISTORY = 100;
 
 /**
+ * How many rendered lines to keep. A long session (help spam, big listings)
+ * would otherwise grow the log DOM without bound — memory and layout cost
+ * for output nobody scrolls back to.
+ */
+const MAX_LINES = 300;
+
+/**
  * Clamps a candidate height against the minimum and the current viewport.
  *
  * Lives here rather than in the store because the store must not touch
@@ -59,6 +66,8 @@ export type TerminalLineInput = {
 
 type TerminalState = {
   isOpen: boolean;
+  /** Whether the panel has ever been opened — drives the launcher nudge. */
+  seen: boolean;
   /** Panel height in CSS pixels. The live drag does not write here — see the panel. */
   height: number;
   /** Rendered output, oldest first. */
@@ -70,6 +79,8 @@ type TerminalState = {
   open: () => void;
   close: () => void;
   toggle: () => void;
+  /** Records a first open; the launcher stops nudging afterwards. */
+  markSeen: () => void;
   setHeight: (px: number) => void;
   /** Appends one line. */
   print: (line: TerminalLineInput) => void;
@@ -83,32 +94,38 @@ export const useTerminalStore = create<TerminalState>()(
   persist(
     (set) => ({
       isOpen: false,
+      seen: false,
       height: TERMINAL_DEFAULT_HEIGHT,
       lines: [],
       inputHistory: [],
       nextLineId: 1,
 
-      open: () => set({ isOpen: true }),
+      open: () => set({ isOpen: true, seen: true }),
       close: () => set({ isOpen: false }),
-      toggle: () => set((s) => ({ isOpen: !s.isOpen })),
+      toggle: () => set((s) => ({ isOpen: !s.isOpen, seen: true })),
+
+      markSeen: () => set({ seen: true }),
 
       setHeight: (px) =>
         set({ height: Math.max(TERMINAL_MIN_HEIGHT, Math.round(px)) }),
 
       print: (line) =>
-        set((s) => ({
-          lines: [...s.lines, { ...line, id: s.nextLineId }],
-          nextLineId: s.nextLineId + 1,
-        })),
+        set((s) => {
+          const lines = [
+            ...s.lines,
+            { ...line, id: s.nextLineId },
+          ].slice(-MAX_LINES);
+          return { lines, nextLineId: s.nextLineId + 1 };
+        }),
 
       printMany: (incoming) =>
-        set((s) => ({
-          lines: [
+        set((s) => {
+          const lines = [
             ...s.lines,
             ...incoming.map((line, i) => ({ ...line, id: s.nextLineId + i })),
-          ],
-          nextLineId: s.nextLineId + incoming.length,
-        })),
+          ].slice(-MAX_LINES);
+          return { lines, nextLineId: s.nextLineId + incoming.length };
+        }),
 
       clear: () => set({ lines: [] }),
 
@@ -143,7 +160,22 @@ export const useTerminalStore = create<TerminalState>()(
       partialize: (s) => ({
         height: s.height,
         inputHistory: s.inputHistory,
+        seen: s.seen,
       }),
+      /*
+       * A height persisted on a tall screen can dwarf a small one (desktop
+       * 800px reopened on a phone). Clamp on the way back in — here, not in
+       * an effect, so no cascading render. Server-safe: without `window`
+       * there is no viewport to exceed, so the stored value passes through.
+       */
+      merge: (persisted, current) => {
+        const incoming = (persisted ?? {}) as Partial<TerminalState>;
+        const height =
+          typeof window === "undefined" || typeof incoming.height !== "number"
+            ? (incoming.height ?? current.height)
+            : clampTerminalHeight(incoming.height, window.innerHeight);
+        return { ...current, ...incoming, height };
+      },
     },
   ),
 );
