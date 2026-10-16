@@ -4,6 +4,8 @@ import { fa } from "@/content/fa";
 import { AdminPageHeader } from "@/features/admin/components/ui";
 import {
   DwellTimeline,
+  IpBadge,
+  SectionBars,
   SessionShape,
   SessionTime,
   SpecsLine,
@@ -11,8 +13,9 @@ import {
   VisitsTabs,
   hostOf,
 } from "@/features/admin/components/visits";
+import { sectionLabel } from "@/features/admin/lib/section-labels";
 import { requireAdmin } from "@/features/admin/lib/require-admin";
-import { getSession } from "@/lib/db/visits";
+import { getSession, sessionSections } from "@/lib/db/visits";
 import { formatDuration } from "@/lib/format-date";
 
 export const metadata = { title: fa.admin.sessionDetail };
@@ -41,6 +44,7 @@ export default async function AdminSessionPage({
     );
   }
 
+  const sections = await sessionSections(session.id);
   const host = hostOf(session.referrer);
   const dash = <span className="text-muted-foreground">—</span>;
   const facts: Array<[string, React.ReactNode]> = [
@@ -80,22 +84,7 @@ export default async function AdminSessionPage({
         <span key="r">{dash}</span>
       ),
     ],
-    [
-      "IP",
-      session.ip ? (
-        <Link
-          key="ip"
-          href={`/admin/visits?ip=${encodeURIComponent(session.ip)}`}
-          dir="ltr"
-          className="font-mono text-xs hover:text-primary"
-        >
-          {session.ip}
-          {session.country ? ` · ${session.country}` : ""}
-        </Link>
-      ) : (
-        <span key="ip">{dash}</span>
-      ),
-    ],
+    ["IP", <IpBadge key="ip" ip={session.ip} country={session.country} />],
     [
       fa.admin.visitUniqueVisitors,
       session.visitor ? (
@@ -147,6 +136,13 @@ export default async function AdminSessionPage({
           </div>
         ))}
       </dl>
+
+      {sections.length > 0 && (
+        <section className="border-border/70 mb-8 rounded-2xl border p-4">
+          <h2 className="mb-3 text-sm font-medium">{fa.admin.visitSessionSections}</h2>
+          <SectionBars sections={sections} labelFor={sectionLabel} />
+        </section>
+      )}
 
       <h2 className="mb-3 text-sm font-medium">{fa.admin.visitTimeline}</h2>
       {session.pageViews.length === 0 ? (

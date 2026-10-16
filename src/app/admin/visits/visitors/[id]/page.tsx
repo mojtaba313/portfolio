@@ -3,6 +3,7 @@ import Link from "next/link";
 import { fa } from "@/content/fa";
 import { AdminPageHeader } from "@/features/admin/components/ui";
 import {
+  IpBadge,
   SessionShape,
   SessionTime,
   SessionTrail,
@@ -110,18 +111,9 @@ export default async function AdminVisitorPage({
           <dt className="text-muted-foreground w-36 shrink-0 text-xs">IP</dt>
           <dd className="flex min-w-0 flex-1 flex-wrap gap-1.5">
             {visitor.ips.length === 0 ? (
-              <span className="text-muted-foreground">—</span>
+              <span className="text-muted-foreground">{fa.admin.visitNoIp}</span>
             ) : (
-              visitor.ips.map((ip) => (
-                <Link
-                  key={ip}
-                  href={`/admin/visits?ip=${encodeURIComponent(ip)}`}
-                  dir="ltr"
-                  className="hover:text-primary rounded-full border border-border/70 px-2.5 py-0.5 font-mono text-[11px] transition-colors"
-                >
-                  {ip}
-                </Link>
-              ))
+              visitor.ips.map((ip) => <IpBadge key={ip} ip={ip} />)
             )}
           </dd>
         </div>

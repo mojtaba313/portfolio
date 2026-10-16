@@ -3,6 +3,7 @@ import { Geist_Mono, Vazirmatn } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 
 import { fa, site } from "@/content/fa";
+import { SectionEngagement } from "@/features/analytics/components/section-engagement";
 import { VisitReporter } from "@/features/analytics/components/visit-reporter";
 import { SceneBackground } from "@/features/scene-3d/components/scene-background";
 import { ScrollAnimationsLoader } from "@/features/scroll-animations/components/scroll-animations-loader";
@@ -119,6 +120,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
            * mounts rather than in the visual stack.
            */}
           <VisitReporter />
+          {/*
+           * Section engagement: which part of a long page the visitor is
+           * actually looking at. Scroll-driven, never hash-driven — see the
+           * component for why the URL is deliberately ignored.
+           */}
+          <SectionEngagement />
           {/*
            * The animation loader deliberately renders last. It hydrates after
            * every content subtree, so its scroll listener — and therefore any

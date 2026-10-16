@@ -54,13 +54,25 @@ export const visitBeaconSchema = z
     dwellMs: dwell.nullish(),
     closePageViewId: id.nullish(),
     closeDwellMs: dwell.nullish(),
+    // Section engagement: absolute per-section totals for an existing page view.
+    sections: z
+      .array(
+        z.object({
+          sectionId: z.string().min(1).max(64),
+          dwellMs: dwell,
+          views: z.number().int().min(1).max(10_000),
+        }),
+      )
+      .max(12)
+      .optional(),
   })
   .refine(
     (b) =>
       // create: a path always comes with specs
       (Boolean(b.path) && Boolean(b.client)) ||
-      // attach / dwell: an existing page view id plus something to say
-      (Boolean(b.pageViewId) && (Boolean(b.client) || Boolean(b.dwellMs))),
+      // attach / dwell / sections: an existing page view id plus something to say
+      (Boolean(b.pageViewId) &&
+        (Boolean(b.client) || Boolean(b.dwellMs) || Boolean(b.sections?.length))),
     { error: "payload does not describe a known beacon mode" },
   );
 

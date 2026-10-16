@@ -368,8 +368,43 @@ model PageView {
   /// view so the timeline is always populated.
   dwellMs Int?
 
+  sections SectionDwell[]
+
   @@index([sessionId, viewedAt])
   @@index([viewedAt])
+}
+
+/// Time spent per page *section*, per page view — the behavioural layer below
+/// the page: "did they actually read the projects section, or scroll past it".
+///
+/// Measured from real viewport occupancy, never from `location.hash`: a visitor
+/// who lands on `/#projects` and then scrolls down to the skills graph has spent
+/// their time on skills, and the hash would have recorded the opposite.
+model SectionDwell {
+  id String @id @default(cuid())
+
+  pageViewId String
+  pageView   PageView @relation(fields: [pageViewId], references: [id], onDelete: Cascade)
+
+  /// Page the section belongs to ("/" for the home page's sections).
+  path      String
+  /// Element id of the section — the SECTION_IDS registry plus "top".
+  sectionId String
+
+  /// Accumulated milliseconds with this section as the active one. Absolute,
+  /// not incremental: every report overwrites, so a lost heartbeat costs time,
+  /// never double-counts it.
+  dwellMs Int @default(0)
+  /// How many times the section became the active one (returns counted).
+  views Int @default(1)
+
+  firstSeenAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // One row per (page view, section): the tracker re-reports whole totals.
+  @@unique([pageViewId, sectionId])
+  // Aggregate panels filter by page, the session detail reads by page view.
+  @@index([path, sectionId])
 }
 
 // ---------------------------------------------------------------------------

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { fa } from "@/content/fa";
 import { AdminPageHeader } from "@/features/admin/components/ui";
 import {
+  IpBadge,
   VisitBadges,
   VisitFilterForm,
   VisitPagination,
@@ -90,10 +91,11 @@ export default async function AdminVisitorsPage({
                 >
                   {visitor.id.slice(0, 8)}
                 </Link>
-                {visitor.ips[0] && (
-                  <span dir="ltr" className="font-mono text-xs">
-                    {visitor.ips[0]}
-                  </span>
+                {/* The address leads the row: "who/where" is the first question. */}
+                {visitor.ips.length > 0 ? (
+                  <IpBadge ip={visitor.ips[0]} country={visitor.country} />
+                ) : (
+                  <span className="text-muted-foreground text-xs">{fa.admin.visitNoIp}</span>
                 )}
                 <span className="text-muted-foreground text-xs">
                   {visitor.sessionCount.toLocaleString("fa-IR")}{" "}
@@ -122,17 +124,10 @@ export default async function AdminVisitorsPage({
                 </span>
               </div>
 
-              {visitor.ips.length > 0 && (
+              {visitor.ips.length > 1 && (
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  {visitor.ips.map((ip) => (
-                    <Link
-                      key={ip}
-                      href={`/admin/visits?ip=${encodeURIComponent(ip)}`}
-                      dir="ltr"
-                      className="text-muted-foreground hover:text-primary rounded-full border border-border/70 px-2.5 py-0.5 font-mono text-[11px] transition-colors"
-                    >
-                      {ip}
-                    </Link>
+                  {visitor.ips.slice(1).map((ip) => (
+                    <IpBadge key={ip} ip={ip} />
                   ))}
                 </div>
               )}

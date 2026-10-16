@@ -262,6 +262,113 @@ async function pageViewExists(id: string): Promise<boolean> {
   return row !== null;
 }
 
+// ---------------------------------------------------------------------------
+// Section engagement
+// ---------------------------------------------------------------------------
+
+/** One section's reading time, as the tracker reports it. */
+export type SectionReport = {
+  sectionId: string;
+  dwellMs: number;
+  views: number;
+};
+
+/**
+ * Stores a page view's section totals.
+ *
+ * Absolute values, upserted: the tracker re-sends the whole picture on every
+ * heartbeat, on navigation, and on unload, so a dropped report can only lose
+ * time — it can never double it. Silently ignores unknown page views (stale
+ * cookie, proxy insert still in flight), exactly like `enrichPageView`.
+ */
+export async function upsertSectionDwell(
+  pageViewId: string,
+  path: string,
+  reports: SectionReport[],
+): Promise<boolean> {
+  if (reports.length === 0) return true;
+  try {
+    const view = await prisma.pageView.findUnique({
+      where: { id: pageViewId },
+      select: { id: true },
+    });
+    if (!view) return false;
+
+    for (const report of reports) {
+      const sectionId = report.sectionId.slice(0, 64);
+      await prisma.sectionDwell.upsert({
+        where: { pageViewId_sectionId: { pageViewId, sectionId } },
+        create: {
+          pageViewId,
+          path: path.slice(0, 500),
+          sectionId,
+          dwellMs: report.dwellMs,
+          views: report.views,
+        },
+        // Absolute totals, last report wins: heartbeats re-send everything.
+        update: {
+          dwellMs: Math.max(0, report.dwellMs),
+          views: Math.max(1, report.views),
+        },
+      });
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export type SectionTotal = {
+  sectionId: string;
+  dwellMs: number;
+  views: number;
+  visits: number;
+};
+
+/**
+ * Aggregate section engagement across sessions, honouring the same filters as
+ * the list (`q` matches paths, `scope` human/bot, `ip`). The home-page panel
+ * reads this; ordering stays by time spent, which is the ranking the owner
+ * actually wants ("they spent their visit in the projects section").
+ */
+export async function sectionTotals(
+  filter: VisitFilter,
+  path: string,
+): Promise<SectionTotal[]> {
+  const scope = sessionWhere(filter);
+  const grouped = await prisma.sectionDwell.groupBy({
+    by: ["sectionId", "path"],
+    where: { path, pageView: { session: scope } },
+    _sum: { dwellMs: true, views: true },
+    _count: { _all: true },
+  });
+
+  return grouped
+    .map((row) => ({
+      sectionId: row.sectionId,
+      dwellMs: row._sum.dwellMs ?? 0,
+      views: row._sum.views ?? 0,
+      visits: row._count._all,
+    }))
+    .sort((a, b) => b.dwellMs - a.dwellMs);
+}
+
+/** Section breakdown for one session — what this visitor looked at, and for how long. */
+export async function sessionSections(sessionId: string): Promise<SectionTotal[]> {
+  const rows = await prisma.sectionDwell.findMany({
+    where: { pageView: { sessionId } },
+    select: { sectionId: true, dwellMs: true, views: true },
+  });
+  return rows
+    .map((row) => ({
+      sectionId: row.sectionId,
+      dwellMs: row.dwellMs,
+      views: row.views,
+      visits: 1,
+    }))
+    .sort((a, b) => b.dwellMs - a.dwellMs);
+}
+
 /**
  * Durations, derived rather than stored: time on a page is the gap to the
  * next view (client-reported dwell wins, then the gap, and for the last page

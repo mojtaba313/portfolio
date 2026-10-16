@@ -304,6 +304,81 @@ export function DwellTimeline({
   );
 }
 
+/**
+ * The visitor's address, always labelled. Analytics questions start here —
+ * "who was that, from where" — so it gets a first-class chip rather than one
+ * more muted detail in a list of facts.
+ */
+export function IpBadge({
+  ip,
+  country,
+  className,
+}: {
+  ip: string | null;
+  country?: string | null;
+  className?: string;
+}) {
+  if (!ip) return null;
+  return (
+    <Link
+      href={`/admin/visits?ip=${encodeURIComponent(ip)}`}
+      dir="ltr"
+      title={fa.admin.visitIpFilter}
+      className={cn(
+        "border-border/70 text-foreground hover:border-primary/50 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-[11px] transition-colors",
+        className,
+      )}
+    >
+      <span className="text-muted-foreground font-sans">IP</span>
+      {ip}
+      {country ? <span className="text-muted-foreground">{country}</span> : null}
+    </Link>
+  );
+}
+
+/**
+ * Reading time per section, as labelled bars.
+ *
+ * `totalMs` scales the bars so the longest section fills the row; the
+ * percentage beside each is the number to reason with ("70% of their time went
+ * into the projects section"). Used both for the whole-site aggregate and for a
+ * single session's breakdown — same shape, different scope.
+ */
+export function SectionBars({
+  sections,
+  labelFor,
+}: {
+  sections: Array<{ sectionId: string; dwellMs: number; views: number }>;
+  labelFor: (sectionId: string) => string;
+}) {
+  const total = sections.reduce((sum, section) => sum + section.dwellMs, 0);
+  const max = Math.max(...sections.map((section) => section.dwellMs), 1);
+
+  return (
+    <ul className="space-y-2">
+      {sections.map((section) => (
+        <li key={section.sectionId} className="flex items-center gap-3">
+          <span className="w-24 shrink-0 truncate text-xs">{labelFor(section.sectionId)}</span>
+          <span className="bg-muted/40 h-2 flex-1 overflow-hidden rounded-full">
+            <span
+              className="bg-primary/70 block h-full rounded-full"
+              style={{ width: `${Math.max(2, Math.round((section.dwellMs / max) * 100))}%` }}
+            />
+          </span>
+          <span className="text-muted-foreground w-28 shrink-0 text-left text-xs tabular-nums">
+            {formatDuration(section.dwellMs)}
+            {total > 0 && (
+              <span className="text-muted-foreground/70 ms-1">
+                {Math.round((section.dwellMs / total) * 100).toLocaleString("fa-IR")}٪
+              </span>
+            )}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function hostOf(referrer: string | null): string | null {
   if (!referrer) return null;
   try {

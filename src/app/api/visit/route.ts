@@ -17,6 +17,7 @@ import {
 import {
   enrichPageView,
   registerPageView,
+  upsertSectionDwell,
   type VisitFacts,
 } from "@/lib/db/visits";
 
@@ -66,6 +67,18 @@ export async function POST(request: Request) {
   }
   const beacon = parsed.data;
   const jar = await cookies();
+
+  if (beacon.pageViewId && beacon.sections?.length) {
+    // Section engagement: absolute totals for this page view, upserted.
+    const ok = await upsertSectionDwell(
+      beacon.pageViewId,
+      beacon.path ?? "",
+      beacon.sections,
+    );
+    return ok
+      ? new Response(null, { status: 204 })
+      : Response.json({ error: "unknown-view" }, { status: 404 });
+  }
 
   if (beacon.pageViewId && beacon.dwellMs && !beacon.path) {
     // Pure dwell close-out (pagehide). No response body needed.

@@ -1,8 +1,10 @@
 import { fa } from "@/content/fa";
 import { AdminPageHeader } from "@/features/admin/components/ui";
-import Link from "next/link";
-
-import { VisitFilterForm, VisitsTabs } from "@/features/admin/components/visits";
+import {
+  IpBadge,
+  VisitFilterForm,
+  VisitsTabs,
+} from "@/features/admin/components/visits";
 import { requireAdmin } from "@/features/admin/lib/require-admin";
 import { listIps } from "@/lib/db/visits";
 import { formatJalaliDateTime } from "@/lib/format-date";
@@ -51,18 +53,7 @@ export default async function AdminIpsPage({
               key={row.ip}
               className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-2xl border border-border/70 bg-white/[0.02] px-4 py-3"
             >
-              <Link
-                href={`/admin/visits?ip=${encodeURIComponent(row.ip)}`}
-                dir="ltr"
-                className="hover:text-primary min-w-0 font-mono text-sm transition-colors"
-              >
-                {row.ip}
-              </Link>
-              {row.country && (
-                <span dir="ltr" className="text-muted-foreground font-mono text-xs">
-                  {row.country}
-                </span>
-              )}
+              <IpBadge ip={row.ip} country={row.country} />
               <span className="text-muted-foreground text-xs">
                 {row.visitorCount.toLocaleString("fa-IR")}{" "}
                 {fa.admin.visitsTabVisitors} ·{" "}

@@ -3,6 +3,8 @@ import Link from "next/link";
 import { fa } from "@/content/fa";
 import { AdminPageHeader } from "@/features/admin/components/ui";
 import {
+  IpBadge,
+  SectionBars,
   SessionShape,
   SessionTime,
   SessionTrail,
@@ -14,8 +16,13 @@ import {
   VisitsTabs,
   hostOf,
 } from "@/features/admin/components/visits";
+import { sectionLabel } from "@/features/admin/lib/section-labels";
 import { requireAdmin } from "@/features/admin/lib/require-admin";
-import { listSessions, type VisitScope } from "@/lib/db/visits";
+import {
+  listSessions,
+  sectionTotals,
+  type VisitScope,
+} from "@/lib/db/visits";
 
 export const metadata = { title: fa.admin.visits };
 
@@ -56,10 +63,12 @@ export default async function AdminVisitsPage({
   const scope = parseScope(params.scope);
   const page = parsePage(params.page);
 
-  const { rows, pageCount, stats } = await listSessions(
-    { q: q || undefined, ip: ip || undefined, scope },
-    page,
-  );
+  const filter = { q: q || undefined, ip: ip || undefined, scope };
+  const [{ rows, pageCount, stats }, sections] = await Promise.all([
+    listSessions(filter, page),
+    // Home-page section reading time, under the same filters as the list.
+    sectionTotals(filter, "/"),
+  ]);
 
   const filterQuery = new URLSearchParams();
   if (q) filterQuery.set("q", q);
@@ -111,6 +120,16 @@ export default async function AdminVisitsPage({
 
       <VisitStatsTiles stats={stats} />
 
+      {sections.length > 0 && (
+        <section className="border-border/70 mb-6 rounded-2xl border p-4">
+          <h2 className="text-sm font-medium">{fa.admin.visitSectionReading}</h2>
+          <p className="text-muted-foreground mt-1 mb-3 text-xs">
+            {fa.admin.visitSectionHint}
+          </p>
+          <SectionBars sections={sections} labelFor={sectionLabel} />
+        </section>
+      )}
+
       <VisitFilterForm
         q={q}
         scope={scope}
@@ -158,16 +177,7 @@ export default async function AdminVisitsPage({
                   <span dir="ltr">
                     {session.browser} · {session.os} · {session.device}
                   </span>
-                  {session.ip && (
-                    <Link
-                      href={`/admin/visits?ip=${encodeURIComponent(session.ip)}`}
-                      dir="ltr"
-                      className="hover:text-primary font-mono transition-colors"
-                    >
-                      {session.ip}
-                      {session.country ? ` · ${session.country}` : ""}
-                    </Link>
-                  )}
+                  <IpBadge ip={session.ip} country={session.country} />
                   <Link
                     href={`/admin/visits/visitors/${session.visitorId}`}
                     dir="ltr"
