@@ -33,7 +33,21 @@ function createPrismaClient() {
     );
   }
 
-  const adapter = new PrismaPg({ connectionString });
+  /*
+   * `options=-c timezone=UTC` is load-bearing, not decoration.
+   *
+   * Prisma maps DateTime to `timestamp WITHOUT TIME ZONE` and writes JS Dates
+   * as **UTC** wall-clock. Any timestamp Postgres produces on its own —
+   * `@default(now())`, `now()` in a raw query — is rendered in the *session*
+   * timezone instead. On a box set to Asia/Tehran that is +3h30m, so the two
+   * conventions land in the same columns and `WHERE "lastActivityAt" > $1`
+   * compares numbers that are three and a half hours apart. Forcing the
+   * connection to UTC makes both sides speak the same wall-clock.
+   */
+  const adapter = new PrismaPg({
+    connectionString,
+    options: "-c timezone=UTC",
+  });
 
   return new PrismaClient({
     adapter,

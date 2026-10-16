@@ -260,6 +260,119 @@ enum DeliveryStatus {
 }
 
 // ---------------------------------------------------------------------------
+// Analytics
+// ---------------------------------------------------------------------------
+
+/// One person-ish thing: an anonymous browser identity (`vid` cookie), seen
+/// across however many sessions they take.
+///
+/// The unit the site is *analysed* by. An employer and a CEO from the same
+/// office share an IP but not a cookie, so they show up as two Visitors under
+/// one IP on the IP overview — exactly the distinction that matters.
+model Visitor {
+  /// The `vid` cookie value (a uuid) — generated on first sight, so the
+  /// identity is stable for as long as the visitor keeps the cookie.
+  id String @id @default(cuid())
+
+  firstSeen DateTime @default(now())
+  lastSeen  DateTime @updatedAt
+
+  /// Latest known facts about the device/person. Raw IP **is** stored on
+  /// purpose: this table exists so the owner can analyse who visits the site.
+  /// `ips` keeps every address the identity has ever appeared behind, so
+  /// "same visitor, new network" is visible instead of split in two.
+  ip        String?
+  /// Postgres text array; duplicates are possible (pushed per sighting) and
+  /// deduplicated at read time.
+  ips       String[]  @default([])
+  country   String?
+  language  String?
+  userAgent String?
+  browser   String?
+  os        String?
+  device    String?
+
+  isBot Boolean @default(false)
+  /// Sticky: true once any sighting carried a valid admin session.
+  owner Boolean @default(false)
+
+  /// Latest hardware specs reported by the beacon (screen, cores, memory…).
+  client Json?
+
+  sessions VisitSession[]
+
+  @@index([lastSeen])
+  @@index([ip])
+  @@index([isBot, lastSeen])
+}
+
+/// A single "visit" in the analytics sense: one continuous stretch of
+/// browsing. Three pages read in a row are three PageViews inside ONE session
+/// — that grouping is the whole point of the table.
+///
+/// A session ends after SESSION_GAP of inactivity (see registerPageView) or
+/// when the identity's next landing opens a new one. `startedAt`/`lastActivityAt`
+/// are what the duration is derived from; no stored duration to drift.
+model VisitSession {
+  id        String  @id @default(cuid())
+  visitorId String
+  visitor   Visitor @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+
+  startedAt       DateTime @default(now())
+  /// Touched on every page view — the "last seen" of the session.
+  lastActivityAt  DateTime @default(now())
+
+  /// Where the session began and (as of the last sighting) ended.
+  entryPath String
+  exitPath  String?
+
+  /// Referer of the *entry* landing — the attribution that matters.
+  referrer String?
+
+  ip        String?
+  country   String?
+  language  String?
+  userAgent String?
+  browser   String?
+  os        String?
+  device    String?
+  isBot     Boolean @default(false)
+  owner     Boolean @default(false)
+  /// First-ever landing for this visitor — the acquisition signal.
+  newVisitor Boolean @default(false)
+
+  /// Hardware specs, merged from every beacon in the session (latest wins).
+  client Json?
+
+  pageViews PageView[]
+
+  // The admin lists sort newest-first and filter humans vs bots over time.
+  @@index([startedAt])
+  @@index([visitorId, startedAt])
+  @@index([ip, startedAt])
+  @@index([isBot, startedAt])
+}
+
+/// One page load inside a session. Rows exist so a session's *path through the
+/// site* is reconstructable — which page, in which order, for how long.
+model PageView {
+  id        String      @id @default(cuid())
+  sessionId String
+  session   VisitSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  path     String
+  viewedAt DateTime @default(now())
+
+  /// Time spent on the page, reported by the beacon when the visitor moves on
+  /// or leaves. Null until then; the admin falls back to the gap to the next
+  /// view so the timeline is always populated.
+  dwellMs Int?
+
+  @@index([sessionId, viewedAt])
+  @@index([viewedAt])
+}
+
+// ---------------------------------------------------------------------------
 // Terminal
 // ---------------------------------------------------------------------------
 

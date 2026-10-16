@@ -5,6 +5,7 @@ import { requireAdmin } from "@/features/admin/lib/require-admin";
 import { countUnreadMessages } from "@/lib/db/contact";
 import { listJokes } from "@/lib/db/jokes";
 import { getGraphData, getPublishedProjects } from "@/lib/db/projects";
+import { visitStats } from "@/lib/db/visits";
 
 export const metadata = { title: fa.admin.dashboard };
 
@@ -16,11 +17,12 @@ export const metadata = { title: fa.admin.dashboard };
 export default async function AdminDashboardPage() {
   await requireAdmin();
 
-  const [projects, graph, jokes, unread] = await Promise.all([
+  const [projects, graph, jokes, unread, visits] = await Promise.all([
     getPublishedProjects(),
     getGraphData(),
     listJokes(),
     countUnreadMessages(),
+    visitStats({}),
   ]);
 
   const cards = [
@@ -44,6 +46,11 @@ export default async function AdminDashboardPage() {
       label: fa.admin.messages,
       count: unread.toLocaleString("fa-IR"),
       badge: unread > 0,
+    },
+    {
+      href: "/admin/visits",
+      label: fa.admin.visits,
+      count: visits.sessions.toLocaleString("fa-IR"),
     },
   ];
 

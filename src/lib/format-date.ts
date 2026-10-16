@@ -39,3 +39,27 @@ export function formatJalaliDateTime(date: Date): string {
   });
 }
 
+/**
+ * A duration as a short Persian string: "۴۵ ثانیه", "۳ دقیقه و ۱۲ ثانیه",
+ * "۱ ساعت و ۵ دقیقه". Used for session length and dwell time, where "how
+ * long" is the question the number is being asked to answer. Seconds are only
+ * spelled out below a minute — above it, the larger unit leads.
+ */
+export function formatDuration(ms: number): string {
+  const totalSeconds = Math.max(0, Math.round(ms / 1000));
+  if (totalSeconds < 60) return `${totalSeconds.toLocaleString("fa-IR")} ثانیه`;
+
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (minutes < 60) {
+    return seconds
+      ? `${minutes.toLocaleString("fa-IR")} دقیقه و ${seconds.toLocaleString("fa-IR")} ثانیه`
+      : `${minutes.toLocaleString("fa-IR")} دقیقه`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const restMinutes = minutes % 60;
+  return restMinutes
+    ? `${hours.toLocaleString("fa-IR")} ساعت و ${restMinutes.toLocaleString("fa-IR")} دقیقه`
+    : `${hours.toLocaleString("fa-IR")} ساعت`;
+}

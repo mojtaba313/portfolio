@@ -3,6 +3,7 @@ import { Geist_Mono, Vazirmatn } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 
 import { fa, site } from "@/content/fa";
+import { VisitReporter } from "@/features/analytics/components/visit-reporter";
 import { SceneBackground } from "@/features/scene-3d/components/scene-background";
 import { ScrollAnimationsLoader } from "@/features/scroll-animations/components/scroll-animations-loader";
 import { TerminalDock } from "@/features/terminal/components/terminal-dock";
@@ -111,6 +112,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
            */}
           <SceneBackground />
           <TerminalDock />
+          {/*
+           * Visit logging, client side: enriches the proxy's row with hardware
+           * specs and creates rows for client-side navigations. Renders null —
+           * it is an effect, not chrome, so it sits with the other global
+           * mounts rather than in the visual stack.
+           */}
+          <VisitReporter />
           {/*
            * The animation loader deliberately renders last. It hydrates after
            * every content subtree, so its scroll listener — and therefore any
