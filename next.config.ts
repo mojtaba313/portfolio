@@ -10,6 +10,22 @@ const nextConfig: NextConfig = {
    * to be wrapped in `"use cache"` or sit behind a `<Suspense>` boundary.
    */
   cacheComponents: true,
+
+  /**
+   * Uploaded images live in the bucket repository and are served from
+   * `raw.githubusercontent.com`, which is CDN-backed and free. Listing the host
+   * explicitly is what lets `next/image` optimise those covers (resize, WebP,
+   * lazy loading) instead of falling back to a plain <img>.
+   */
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "raw.githubusercontent.com",
+        pathname: "/**",
+      },
+    ],
+  },
 };
 
 export default nextConfig;

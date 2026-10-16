@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import Link from "next/link";
+import { useActionState, useRef } from "react";
 
 import { fa } from "@/content/fa";
 import type { AdminActionState } from "@/features/admin/lib/validation";
@@ -11,6 +12,7 @@ import {
   ADMIN_TEXTAREA_CLASS,
 } from "@/features/admin/components/ui";
 import { AdminSubmitButton } from "@/features/admin/components/buttons";
+import { CoverUploader } from "@/features/admin/components/cover-uploader";
 import type { SkillNode } from "@/lib/db/projects";
 
 /**
@@ -70,13 +72,17 @@ export function ProjectForm({
   defaults,
   skills,
   submitLabel,
+  projectId,
 }: {
   action: (state: AdminActionState, formData: FormData) => Promise<AdminActionState>;
   defaults: ProjectFormDefaults;
+  /** Present when editing, so the cover field can link to the media picker. */
+  projectId?: string;
   skills: Pick<SkillNode, "id" | "name" | "category">[];
   submitLabel: string;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
+  const coverFieldRef = useRef<HTMLInputElement>(null);
   const linked = new Map(defaults.links.map((l) => [l.skillId, l.weight]));
 
   return (
@@ -178,13 +184,35 @@ export function ProjectForm({
         </AdminField>
       </div>
 
-      <AdminField label="کاور" hint="مسیر /public یا نشانی اینترنتی">
-        <input
-          name="coverImage"
-          dir="ltr"
-          defaultValue={defaults.coverImage}
-          className={`${ADMIN_INPUT_CLASS} font-mono text-sm`}
-        />
+      <AdminField
+        label="کاور"
+        hint="مسیر /public یا نشانی اینترنتی — یا همین‌جا آپلود کن"
+      >
+        <div className="flex flex-wrap items-start gap-2">
+          <input
+            ref={coverFieldRef}
+            name="coverImage"
+            dir="ltr"
+            defaultValue={defaults.coverImage}
+            className={`${ADMIN_INPUT_CLASS} min-w-48 flex-1 font-mono text-sm`}
+          />
+          {/* Uploads directly from this form; the URL lands in the field
+              above, so the normal save still commits the change. */}
+          <CoverUploader fieldRef={coverFieldRef} />
+          {/*
+            Saving a cover by hand means pasting a URL; the library does the
+            upload and hands the URL back. Only shown when editing, since a new
+            project has no id to pick for yet.
+          */}
+          {projectId && (
+            <Link
+              href={`/admin/media?project=${projectId}`}
+              className="text-muted-foreground hover:text-foreground hover:border-primary/50 flex h-11 items-center rounded-xl border border-border/70 px-4 text-sm transition-colors"
+            >
+              {fa.admin.mediaPickFromLibrary}
+            </Link>
+          )}
+        </div>
       </AdminField>
 
       <div className="grid gap-6 sm:grid-cols-3">

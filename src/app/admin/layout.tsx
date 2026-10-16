@@ -33,6 +33,7 @@ const NAV = [
   { href: "/admin/jokes", label: fa.admin.jokes, exact: false },
   { href: "/admin/messages", label: fa.admin.messages, exact: false },
   { href: "/admin/visits", label: fa.admin.visits, exact: false },
+  { href: "/admin/media", label: fa.admin.media, exact: false },
 ] as const;
 
 /**

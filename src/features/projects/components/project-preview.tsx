@@ -44,16 +44,22 @@ export function ProjectCoverImage({
     );
   }
 
+  /*
+   * Remote covers go through next/image like local ones do. This used to be a
+   * plain <img> so no host allowlist was needed; now that uploaded images live
+   * in the bucket repository and `raw.githubusercontent.com` is listed in
+   * next.config, every cover is resized, re-encoded and served from the CDN —
+   * a 2 MB phone photo on the journey stage stops being a 2 MB phone photo.
+   */
   return (
-    // Remote covers bypass next/image so no remotePatterns config is needed;
-    // lazy loading + async decoding keep them off the critical path.
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
+    <Image
       src={cover}
       alt={alt}
-      loading={eager ? "eager" : "lazy"}
-      decoding="async"
-      className={className ?? "h-full w-full object-cover"}
+      fill
+      sizes={sizes}
+      priority={eager}
+      loading={eager ? undefined : "lazy"}
+      className={className ?? "object-cover"}
     />
   );
 }

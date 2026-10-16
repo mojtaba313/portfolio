@@ -67,6 +67,7 @@ export async function ProjectEditor({ id }: { id: string | null }) {
         defaults={project ? toDefaults(project) : EMPTY_PROJECT}
         skills={skills}
         submitLabel={project ? fa.admin.save : fa.admin.create}
+        projectId={project?.id}
       />
     </div>
   );
