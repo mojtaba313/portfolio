@@ -166,6 +166,14 @@ const PROJECTS: {
   },
 ];
 
+/** Terminal jokes, keyed by stable slug like everything else here. */
+const JOKES: { slug: string; text: string }[] = [
+  { slug: "dark-mode", text: "Why do programmers prefer dark mode? Because light attracts bugs." },
+  { slug: "binary", text: "There are only 10 kinds of people: those who understand binary and those who don't." },
+  { slug: "sql-bar", text: "A SQL query walks into a bar, sees two tables and asks… “Mind if I join you?”" },
+  { slug: "off-by-one", text: "Real programmers count from 0. Everyone else is off by one." },
+];
+
 async function main() {
   console.log("Seeding skills…");
 
@@ -218,13 +226,24 @@ async function main() {
     console.log(`  ${project.slug} (${skills.length} skills)`);
   }
 
-  const [skillCount, projectCount, edgeCount] = await Promise.all([
+  console.log("Seeding jokes…");
+  for (const joke of JOKES) {
+    await prisma.joke.upsert({
+      where: { slug: joke.slug },
+      create: joke,
+      update: joke,
+    });
+  }
+  console.log(`  ${JOKES.length} jokes`);
+
+  const [skillCount, projectCount, edgeCount, jokeCount] = await Promise.all([
     prisma.skill.count(),
     prisma.project.count(),
     prisma.projectSkill.count(),
+    prisma.joke.count(),
   ]);
   console.log(
-    `\nDone: ${skillCount} skills, ${projectCount} projects, ${edgeCount} edges.`,
+    `\nDone: ${skillCount} skills, ${projectCount} projects, ${edgeCount} edges, ${jokeCount} jokes.`,
   );
 }
 

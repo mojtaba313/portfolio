@@ -133,6 +133,123 @@ export async function getProjectJourney(
 }
 
 /**
+ * Every project regardless of status, for the admin list.
+ *
+ * The public readers all filter on PUBLISHED; the owner needs the drafts too.
+ */
+export async function listAllProjects(): Promise<
+  (ProjectNode & {
+    status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+    featured: boolean;
+    displayOrder: number;
+  })[]
+> {
+  return prisma.project.findMany({
+    orderBy: [
+      { featured: "desc" },
+      { completedAt: "desc" },
+      { displayOrder: "asc" },
+    ],
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      summary: true,
+      featured: true,
+      status: true,
+      displayOrder: true,
+      coverImage: true,
+      completedAt: true,
+      skills: { select: { skillId: true, weight: true } },
+    },
+  });
+}
+
+export type ProjectAdminDetail = {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  description: string | null;
+  problem: string | null;
+  solution: string | null;
+  client: string | null;
+  liveUrl: string | null;
+  repoUrl: string | null;
+  coverImage: string | null;
+  status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+  featured: boolean;
+  completedAt: Date | null;
+  displayOrder: number;
+  skills: { skillId: string; weight: number }[];
+};
+
+/** One project with everything the admin edit form needs. */
+export async function getProjectForAdmin(
+  id: string,
+): Promise<ProjectAdminDetail | null> {
+  const row = await prisma.project.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      summary: true,
+      description: true,
+      problem: true,
+      solution: true,
+      client: true,
+      liveUrl: true,
+      repoUrl: true,
+      coverImage: true,
+      status: true,
+      featured: true,
+      completedAt: true,
+      displayOrder: true,
+      skills: {
+        orderBy: { weight: "desc" },
+        select: { skillId: true, weight: true },
+      },
+    },
+  });
+  return row;
+}
+
+/** Every skill, for admin lists and the project skill picker. */
+export async function listAllSkills(): Promise<SkillNode[]> {
+  return prisma.skill.findMany({
+    orderBy: [{ category: "asc" }, { displayOrder: "asc" }, { name: "asc" }],
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      category: true,
+      proficiency: true,
+      color: true,
+      description: true,
+      displayOrder: true,
+    },
+  });
+}
+
+/** One skill for the admin edit form. */
+export async function getSkillForAdmin(id: string): Promise<SkillNode | null> {
+  return prisma.skill.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      category: true,
+      proficiency: true,
+      color: true,
+      description: true,
+      displayOrder: true,
+    },
+  });
+}
+
+/**
  * Published projects for the home page listing.
  *
  * Ordering matches the composite index on (status, featured, completedAt):

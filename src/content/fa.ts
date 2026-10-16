@@ -278,4 +278,23 @@ export const fa = {
       "این بخش موقتاً در دسترس نیست. چند لحظه بعد دوباره تلاش کنید یا به صفحهٔ اصلی برگردید.",
     backHome: "بازگشت به صفحهٔ اصلی",
   },
+
+  /**
+   * Admin panel. Persian like the rest of the reader-facing site — the only
+   * reader is the owner.
+   */
+  admin: {
+    title: "مدیریت سایت",
+    dashboard: "داشبورد",
+    projects: "پروژه‌ها",
+    skills: "مهارت‌ها",
+    jokes: "لطیفه‌ها",
+    messages: "پیام‌ها",
+    status: "وضعیت",
+    featured: "شاخص",
+    actions: "اقدامات",
+    draft: "پیش‌نویس",
+    published: "منتشرشده",
+    archived: "بایگانی‌شده",
+  },
 } as const;

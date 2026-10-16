@@ -120,3 +120,44 @@ export async function markContactMessageFailed(
     data: { deliveryStatus: "FAILED", deliveryError: error.slice(0, 500) },
   });
 }
+
+export type ContactMessageRow = {
+  id: string;
+  name: string;
+  email: string;
+  subject: string | null;
+  message: string;
+  deliveryStatus: "PENDING" | "SENT" | "FAILED";
+  readAt: Date | null;
+  createdAt: Date;
+};
+
+/** Inbox listing, newest first. */
+export async function listContactMessages(): Promise<ContactMessageRow[]> {
+  return prisma.contactMessage.findMany({
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      subject: true,
+      message: true,
+      deliveryStatus: true,
+      readAt: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+/** Unread count for the inbox badge. */
+export async function countUnreadMessages(): Promise<number> {
+  return prisma.contactMessage.count({ where: { readAt: null } });
+}
+
+/** Marks a message read when the owner opens it. Idempotent. */
+export async function markMessageRead(id: string): Promise<void> {
+  await prisma.contactMessage.updateMany({
+    where: { id, readAt: null },
+    data: { readAt: new Date() },
+  });
+}

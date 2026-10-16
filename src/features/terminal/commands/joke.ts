@@ -1,17 +1,33 @@
 import type { Command } from "./types";
 
-const JOKES = [
-  "Why do programmers prefer dark mode? Because light attracts bugs.",
-  "There are only 10 kinds of people: those who understand binary and those who don't.",
-  "A SQL query walks into a bar, sees two tables and asks… “Mind if I join you?”",
-  "Real programmers count from 0. Everyone else is off by one.",
-];
+/** Last resort: the terminal stays funny even if the database is down. */
+const FALLBACK_JOKE =
+  "Why do programmers prefer dark mode? Because light attracts bugs.";
 
 export const jokeCommand: Command = {
   name: "joke",
   description: "A moment of levity, on the house.",
-  run: (_args, ctx) => {
-    const pick = JOKES[Math.floor(Math.random() * JOKES.length)]!;
-    ctx.print({ kind: "output", text: pick });
+  run: async (_args, ctx) => {
+    try {
+      const response = await fetch("/api/jokes/random");
+      if (response.ok) {
+        const data: unknown = await response.json();
+        if (
+          typeof data === "object" &&
+          data !== null &&
+          "text" in data &&
+          typeof (data as { text: unknown }).text === "string"
+        ) {
+          ctx.print({
+            kind: "output",
+            text: (data as { text: string }).text,
+          });
+          return;
+        }
+      }
+    } catch {
+      // Offline, restarting database, alien interference — fall through.
+    }
+    ctx.print({ kind: "output", text: FALLBACK_JOKE });
   },
 };

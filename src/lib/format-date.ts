@@ -26,3 +26,16 @@ export function formatJalaliMonth(date: Date): string {
 export function toIsoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
+
+/**
+ * Date *and* time in Persian, e.g. "۲۵ شهریور ۱۴۰۵، ۱۸:۳۲" — for the visit
+ * log, where the hour of a hit matters and month precision would be useless.
+ * `fa-IR` again resolves to the Persian calendar and Persian digits.
+ */
+export function formatJalaliDateTime(date: Date): string {
+  return date.toLocaleString("fa-IR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+}
+

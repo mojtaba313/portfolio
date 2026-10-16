@@ -232,6 +232,9 @@ model ContactMessage {
   providerId     String?
   /// Why delivery failed, when it did.
   deliveryError  String?
+  /// When the owner first opened this message in the admin inbox. Null means
+  /// unread — the inbox badge counts exactly these rows.
+  readAt DateTime?
 
   /// Request metadata, kept for abuse handling and rate limiting.
   ///
@@ -254,4 +257,29 @@ enum DeliveryStatus {
   PENDING
   SENT
   FAILED
+}
+
+// ---------------------------------------------------------------------------
+// Terminal
+// ---------------------------------------------------------------------------
+
+/// A joke for the terminal's `joke` command.
+///
+/// Jokes live in the database (not in the command file) so new ones land
+/// with a seed or an admin edit rather than a redeploy. English by design —
+/// the terminal is an English island, and so is its humour.
+model Joke {
+  id String @id @default(cuid())
+  /// Stable key for idempotent seeding ("dark-mode", "binary", …).
+  slug String @unique
+  /// The joke text, one or two sentences.
+  text String
+
+  /// Hidden jokes stay in the database but never print.
+  active Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active])
 }
