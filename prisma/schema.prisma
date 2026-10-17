@@ -124,6 +124,7 @@ model Project {
   displayOrder Int @default(0)
 
   skills ProjectSkill[]
+  gallery ProjectImage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -163,6 +164,33 @@ model ProjectSkill {
   // Prisma indexes the first key column automatically; skillId needs its own
   // index for the skill -> projects direction the graph also walks.
   @@index([skillId])
+}
+
+/// One image inside a project's case-study gallery — everything after the
+/// cover: screenshots of the interface, a diagram, the finished result.
+///
+/// Modelled as rows rather than a JSON array on Project for three reasons that
+/// earned their keep: the editor can reorder and delete one image without
+/// rewriting the project row, a missing image can be found with a single
+/// query instead of being hunted inside JSON, and adding a caption later needs
+/// no migration of stored data.
+model ProjectImage {
+  id String @id @default(cuid())
+  projectId String
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  /// Public URL: either a raw bucket address or a path under /public, exactly
+  /// like `coverImage`.
+  url String
+
+  /// Manual position within the gallery. Sparse (0, 1, 2 …) — the editor swaps
+  /// neighbours rather than renumbering the whole set.
+  displayOrder Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  // The gallery is always read as "this project's images, in order".
+  @@index([projectId, displayOrder])
 }
 
 // ---------------------------------------------------------------------------

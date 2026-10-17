@@ -10,6 +10,7 @@ import {
   uploadMediaAction,
   type MediaActionResult,
 } from "@/features/admin/actions-media";
+import { addProjectImageAction } from "@/features/admin/actions-projects";
 import {
   formatImageSize,
   prepareImage,
@@ -35,10 +36,13 @@ import type { MediaItem } from "@/lib/media/github-bucket";
 export function MediaLibrary({
   initialItems,
   projectId,
+  mode = "cover",
 }: {
   initialItems: MediaItem[];
-  /** When present the library doubles as a cover picker for this project. */
+  /** When present the library doubles as a picker for this project. */
   projectId?: string;
+  /** "cover" sets the project's cover; "gallery" appends to its gallery. */
+  mode?: "cover" | "gallery";
 }) {
   const router = useRouter();
   const [items, setItems] = useState(initialItems);
@@ -136,14 +140,25 @@ export function MediaLibrary({
     });
   }
 
-  function setCover(item: MediaItem) {
+  /**
+   * Cover mode replaces the project's cover and returns to the editor, since
+   * there is only one cover and the job is done. Gallery mode appends and
+   * stays put: a case study usually wants three or four screenshots in a row,
+   * and bouncing back to the editor between each one would be absurd.
+   */
+  function attachToProject(item: MediaItem) {
     if (!projectId) return;
     setError("");
     startTransition(async () => {
-      const result = await setProjectCoverAction({
-        projectId,
-        url: item.url,
-      });
+      if (mode === "gallery") {
+        const result = await addProjectImageAction({ projectId, url: item.url });
+        if (!apply(result)) return;
+        setMessage(fa.admin.galleryAdded);
+        router.refresh();
+        return;
+      }
+
+      const result = await setProjectCoverAction({ projectId, url: item.url });
       if (!apply(result)) return;
       setMessage(fa.admin.mediaCoverSet);
       // Client navigation: the editor re-renders with the new cover already in
@@ -293,11 +308,11 @@ export function MediaLibrary({
                 {projectId && (
                   <button
                     type="button"
-                    onClick={() => setCover(item)}
+                    onClick={() => attachToProject(item)}
                     disabled={pending}
                     className="bg-primary text-primary-foreground w-full rounded-full px-3 py-1 text-[11px] transition-opacity hover:opacity-90 disabled:opacity-50"
                   >
-                    {fa.admin.mediaSetCover}
+                    {mode === "gallery" ? fa.admin.galleryAdd : fa.admin.mediaSetCover}
                   </button>
                 )}
               </div>

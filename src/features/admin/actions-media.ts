@@ -5,6 +5,7 @@ import { revalidatePath, updateTag } from "next/cache";
 import { fa } from "@/content/fa";
 import { requireAdmin } from "@/features/admin/lib/require-admin";
 import { prisma } from "@/lib/db/prisma";
+import { isAllowedImageUrl } from "@/lib/media/image-url";
 import {
   ALLOWED_IMAGE_TYPES,
   BucketError,
@@ -204,16 +205,8 @@ export async function setProjectCoverAction(input: {
   await requireAdmin();
 
   try {
-    // A cover is either a repository URL from the bucket or a path in /public;
-    // anything else (a `javascript:` URL, a data: blob, a remote host) is
-    // refused rather than stored for the detail page to render later.
-    const isBucketUrl = /^https:\/\/raw\.githubusercontent\.com\/[\w.-]+\/[\w.-]+\/[\w.-]+\/[\w./-]+\.(jpg|jpeg|png|webp|gif|avif)$/i.test(
-      input.url,
-    );
-    const isLocalPath = /^\/[A-Za-z0-9._/-]+\.(jpg|jpeg|png|webp|gif|avif|svg)$/i.test(
-      input.url,
-    );
-    if (!isBucketUrl && !isLocalPath) {
+    // Same allowlist the gallery uses: bucket raw addresses and /public paths.
+    if (!isAllowedImageUrl(input.url)) {
       return { ok: false, error: fa.admin.mediaBadUrl };
     }
 

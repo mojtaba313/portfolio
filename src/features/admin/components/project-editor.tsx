@@ -6,6 +6,7 @@ import {
   createProjectAction,
   updateProjectAction,
 } from "@/features/admin/actions-projects";
+import { ProjectGalleryManager } from "@/features/admin/components/project-gallery-manager";
 import { AdminPageHeader } from "@/features/admin/components/ui";
 import {
   EMPTY_PROJECT,
@@ -69,6 +70,14 @@ export async function ProjectEditor({ id }: { id: string | null }) {
         submitLabel={project ? fa.admin.save : fa.admin.create}
         projectId={project?.id}
       />
+      {/* Gallery lives outside the form on purpose: images are added, moved
+          and removed through their own actions, so the owner never loses a
+          gallery edit to an unsaved change elsewhere on the page. */}
+      {project && (
+        <div className="mt-6">
+          <ProjectGalleryManager projectId={project.id} images={project.gallery} />
+        </div>
+      )}
     </div>
   );
 }

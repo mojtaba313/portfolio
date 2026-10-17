@@ -7,6 +7,7 @@ import { Suspense } from "react";
 import { SkillBadge } from "@/components/project-card";
 import { Button } from "@/components/ui/button";
 import { fa } from "@/content/fa";
+import { ProjectGallery } from "@/features/projects/components/project-gallery";
 import { ProjectCoverImage } from "@/features/projects/components/project-preview";
 import {
   getProjectBySlug,
@@ -258,6 +259,13 @@ async function ProjectBody({
             </p>
           ))}
         </div>
+      )}
+
+      {project.gallery.length > 0 && (
+        <section className="space-y-4">
+          <h2 className="text-sm font-medium">{fa.admin.galleryOnSite}</h2>
+          <ProjectGallery images={project.gallery} />
+        </section>
       )}
 
       {project.skills.length > 0 && (

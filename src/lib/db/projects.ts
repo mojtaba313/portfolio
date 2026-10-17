@@ -58,6 +58,14 @@ export type ProjectDetail = {
   coverImage: string | null;
   completedAt: Date | null;
   skills: SkillNode[];
+  /** Case-study gallery, in the owner's chosen order. */
+  gallery: ProjectGalleryImage[];
+};
+
+/** One gallery image as the public page needs it — nothing else. */
+export type ProjectGalleryImage = {
+  id: string;
+  url: string;
 };
 
 /** Everything the skills graph needs, in one round trip. */
@@ -182,6 +190,8 @@ export type ProjectAdminDetail = {
   completedAt: Date | null;
   displayOrder: number;
   skills: { skillId: string; weight: number }[];
+  /** Gallery rows with their ids — the editor reorders and deletes by id. */
+  gallery: { id: string; url: string; displayOrder: number }[];
 };
 
 /** One project with everything the admin edit form needs. */
@@ -206,6 +216,10 @@ export async function getProjectForAdmin(
       featured: true,
       completedAt: true,
       displayOrder: true,
+      gallery: {
+        orderBy: { displayOrder: "asc" },
+        select: { id: true, url: true, displayOrder: true },
+      },
       skills: {
         orderBy: { weight: "desc" },
         select: { skillId: true, weight: true },
@@ -297,6 +311,10 @@ export async function getPublishedProjects(): Promise<ProjectNode[]> {
       repoUrl: true,
       coverImage: true,
       completedAt: true,
+      gallery: {
+        orderBy: { displayOrder: "asc" },
+        select: { id: true, url: true },
+      },
       skills: {
         orderBy: { weight: "desc" },
         select: {

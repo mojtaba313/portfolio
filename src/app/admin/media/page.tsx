@@ -8,7 +8,7 @@ import { requireAdmin } from "@/features/admin/lib/require-admin";
 
 export const metadata = { title: fa.admin.mediaLibrary };
 
-type SearchParams = Promise<{ project?: string }>;
+type SearchParams = Promise<{ project?: string; target?: string }>;
 
 /**
  * Media library — images stored as commits in the bucket repository.
@@ -25,7 +25,10 @@ export default async function AdminMediaPage({
 }) {
   await requireAdmin();
 
-  const { project } = await searchParams;
+  const { project, target } = await searchParams;
+  // The same library serves two jobs: set the cover, or fill the gallery.
+  // `target` only decides what a click on an image means.
+  const mode = target === "gallery" ? "gallery" : "cover";
   const { items, configured } = await listMediaAction();
 
   return (
@@ -47,12 +50,12 @@ export default async function AdminMediaPage({
 
       {project && (
         <p className="text-muted-foreground mb-6 text-sm">
-          {fa.admin.mediaForProject}
+          {mode === "gallery" ? fa.admin.galleryFromLibrary : fa.admin.mediaForProject}
         </p>
       )}
 
       {configured ? (
-        <MediaLibrary initialItems={items} projectId={project} />
+        <MediaLibrary initialItems={items} projectId={project} mode={mode} />
       ) : (
         <p className="text-muted-foreground text-sm">{fa.admin.mediaNotConfigured}</p>
       )}
