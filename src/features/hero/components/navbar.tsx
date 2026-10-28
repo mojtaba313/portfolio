@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 
 const LINKS = [
   { href: "#top", label: fa.nav.home },
+  { href: `#${SECTION_IDS.about}`, label: fa.nav.about },
   { href: `#${SECTION_IDS.projects}`, label: fa.nav.projects },
   { href: `#${SECTION_IDS.skills}`, label: fa.nav.skills },
   { href: `#${SECTION_IDS.contact}`, label: fa.nav.contact },

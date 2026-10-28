@@ -32,6 +32,7 @@ import { SECTION_IDS } from "@/lib/sections";
 /** Section ids to watch: the shared registry plus the full-height hero. */
 const TRACKED_IDS: readonly string[] = [
   "top",
+  SECTION_IDS.about,
   SECTION_IDS.projects,
   SECTION_IDS.skills,
   SECTION_IDS.github,

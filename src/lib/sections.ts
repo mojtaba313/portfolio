@@ -8,6 +8,7 @@
  * than a silent no-op.
  */
 export const SECTION_IDS = {
+  about: "about",
   projects: "projects",
   skills: "skills-graph",
   github: "github-stats",

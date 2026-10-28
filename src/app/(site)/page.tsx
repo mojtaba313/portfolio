@@ -2,6 +2,7 @@ import { cacheLife, cacheTag } from "next/cache";
 
 import { Section } from "@/components/section";
 import { fa } from "@/content/fa";
+import { AboutSection } from "@/features/about/components/about-section";
 import { ContactFinale } from "@/features/contact/components/contact-finale";
 import { Footer } from "@/features/footer/components/footer";
 import { GithubStats } from "@/features/github-stats/components/github-stats";
@@ -73,6 +74,12 @@ export default function Home() {
           #main starts at the scannable content the skip link targets. */}
       <Hero />
       <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
+        {/* Who I am before what I built: the employer-facing question is
+            answered first, and the projects then read as its evidence. */}
+        <div className="mx-auto w-full max-w-4xl px-6">
+          <AboutSection />
+        </div>
+
         {/* The project journey is a full-width stage — each project needs the
             horizontal room — so it sits outside the reading-measure wrapper the
             later sections use. The animator is loaded on its own so GSAP stays
