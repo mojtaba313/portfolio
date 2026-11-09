@@ -4,6 +4,8 @@ import { ProjectEditor } from "@/features/admin/components/project-editor";
 
 export const metadata = { title: `${fa.admin.new} — ${fa.admin.projects}` };
 
+export const instant = false;
+
 export default async function NewProjectPage() {
   return <ProjectEditor id={null} />;
 }

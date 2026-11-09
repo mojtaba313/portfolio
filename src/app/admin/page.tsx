@@ -9,6 +9,8 @@ import { visitStats } from "@/lib/db/visits";
 
 export const metadata = { title: fa.admin.dashboard };
 
+export const instant = false;
+
 /**
  * Owner overview: one card per managed area with a live count. Every number
  * here comes from the same repository functions the public site reads, so

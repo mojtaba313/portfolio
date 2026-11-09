@@ -12,6 +12,8 @@ import { markMessageRead } from "@/lib/db/contact";
 import { prisma } from "@/lib/db/prisma";
 import { formatJalaliMonth } from "@/lib/format-date";
 
+export const instant = false;
+
 /**
  * One message, marked read on open.
  *

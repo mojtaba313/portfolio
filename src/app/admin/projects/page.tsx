@@ -16,6 +16,8 @@ const STATUS_LABEL: Record<string, string> = {
   ARCHIVED: fa.admin.archived,
 };
 
+export const instant = false;
+
 /** All projects including drafts — the public site never shows this list. */
 export default async function AdminProjectsPage() {
   await requireAdmin();

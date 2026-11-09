@@ -10,6 +10,8 @@ export const metadata = { title: fa.admin.mediaLibrary };
 
 type SearchParams = Promise<{ project?: string; target?: string }>;
 
+export const instant = false;
+
 /**
  * Media library — images stored as commits in the bucket repository.
  *

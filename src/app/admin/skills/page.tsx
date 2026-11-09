@@ -7,6 +7,8 @@ import { deleteSkillAction } from "@/features/admin/actions-skills";
 import { AdminDeleteButton } from "@/features/admin/components/buttons";
 import { listAllSkills } from "@/lib/db/projects";
 
+export const instant = false;
+
 /** Every skill with its category, proficiency and usage signal. */
 export default async function AdminSkillsPage({
   searchParams,

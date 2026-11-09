@@ -407,22 +407,56 @@ export function HeroWorkspaceCanvas({
 
   /*
    * Offscreen pause: while the hero is scrolled out of view the render loop
-   * drops to on-demand — no 60fps burn for invisible pixels. State flips only
-   * from the observer callback, and the initial `true` matches the server
-   * render, so there is no hydration risk (this whole tree is client-only
-   * behind `ssr: false` anyway).
+   * stops entirely — no frames, not even on-demand ones. The initial `true`
+   * matches the server render, so there is no hydration risk (this tree is
+   * client-only behind `ssr: false` anyway).
+   *
+   * Two signals feed one measurement: the observer schedules a re-read, and a
+   * throttled scroll/resize listener covers environments where the observer
+   * callback is delayed or clipped by an ancestor. The decision always comes
+   * from the live rect plus `visibilityState`, never from the observer entry
+   * alone — that is what keeps the loop honest in production builds.
    */
   const wrapRef = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(true);
+  const [visible, setVisible] = useState(true);
   useEffect(() => {
     const node = wrapRef.current;
-    if (!node || typeof IntersectionObserver === "undefined") return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setInView(entry?.isIntersecting ?? true),
-      { threshold: 0 },
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
+    if (!node) return;
+
+    let frame = 0;
+    const measure = (): void => {
+      frame = 0;
+      const rect = node.getBoundingClientRect();
+      const onScreen =
+        document.visibilityState === "visible" &&
+        rect.bottom > 0 &&
+        rect.top < window.innerHeight &&
+        rect.right > 0 &&
+        rect.left < window.innerWidth;
+      setVisible((previous) => (previous === onScreen ? previous : onScreen));
+    };
+    // rAF gate: the observer, scroll and resize can all fire in one frame.
+    const schedule = (): void => {
+      if (frame === 0) frame = requestAnimationFrame(measure);
+    };
+
+    const observer =
+      typeof IntersectionObserver === "undefined"
+        ? null
+        : new IntersectionObserver(schedule, { threshold: 0 });
+    observer?.observe(node);
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    document.addEventListener("visibilitychange", schedule);
+    measure();
+
+    return () => {
+      cancelAnimationFrame(frame);
+      observer?.disconnect();
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      document.removeEventListener("visibilitychange", schedule);
+    };
   }, []);
 
   return (
@@ -430,7 +464,7 @@ export function HeroWorkspaceCanvas({
       <Canvas
         dpr={[1, 1.25]}
         gl={{ antialias: true, alpha: true, powerPreference: "low-power" }}
-        frameloop={animated && inView ? "always" : "demand"}
+        frameloop={visible ? (animated ? "always" : "demand") : "never"}
       >
       <PerspectiveCamera makeDefault position={[0, 0.15, 8.4]} fov={36} />
       {/*

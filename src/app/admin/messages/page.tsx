@@ -7,6 +7,8 @@ import { listContactMessages } from "@/lib/db/contact";
 import { formatJalaliMonth } from "@/lib/format-date";
 import { cn } from "@/lib/utils";
 
+export const instant = false;
+
 /** Owner inbox: newest first, unread marked with a dot. */
 export default async function AdminMessagesPage() {
   await requireAdmin();

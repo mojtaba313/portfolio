@@ -26,6 +26,8 @@ function parsePage(raw: string | undefined): number {
   return Number.isFinite(n) && n > 0 ? n : 1;
 }
 
+export const instant = false;
+
 /**
  * Visitors — one row per anonymous identity, across all time.
  *

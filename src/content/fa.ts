@@ -100,7 +100,7 @@ export const fa = {
     /** Latin eyebrow above the headline. Never translated — it is a signature. */
     heroEyebrow: "MOJTABA",
     /** Headline, one entry per revealed line. Confident, no marketing noise. */
-    heroHeadline: ["چیزی میسازم", "که فقط کار نکنه", "لذتشو ببری"],
+    heroHeadline: ["\"کار می کنه\" کافی نیست", "چیزی می سازم که", "لذتشو ببری"],
     /** Latin stack line under the supporting text. */
     heroStack: "Next.js · React · TypeScript · Node.js",
     heroScroll: "اسکرول",
@@ -123,9 +123,7 @@ export const fa = {
      * loud; the timeline below carries the dates.
      */
     aboutLead: [
-      "من مجتبی هستم. مسیرم به برنامه‌نویسی از جایی شروع شد که هیچ‌وقت فکرش را نمی‌کردم: ۱۵ سالگی، سر فیلم‌برداری یک سریال بودم که کرونا گرفتم و قرنطینه شدم.",
-      "آن روزهای تنهایی و خانه‌نشینی باعث شد بیشتر از همیشه با لپ‌تاپ کار کنم و در موضوعات عمیق شوم. همین‌جا بود که مقدمات C++ را یاد گرفتم و بعد به سمت وب و فرانت‌اند رفتم؛ در کنارش کمی هم بک‌اند مطالعه کردم.",
-      "در ۱۷ سالگی به عنوان کارآموز در شرکت فناوران گیتی افروز مشغول شدم، اما با نزدیک شدن کنکور از برنامه‌نویسی فاصله گرفتم. بعد از قبولی در رشتهٔ پزشکی در شهر خودم، دوباره کدنویسی را شروع کردم و پروژه گرفتم؛ حالا ترم سوم پزشکی هستم و در حال آموزش برای ورود به حوزهٔ دیپ‌لرنینگ.",
+      "من مجتبی هستم. مسیرم به برنامه‌نویسی از جایی شروع شد که هیچ‌وقت فکرش را نمی‌کردم.",
     ],
     /** Quick facts, mirroring the terminal's `about` command in prose form. */
     aboutFacts: [

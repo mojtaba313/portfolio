@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
+import { motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 
 import { ThemeToggle } from "@/components/theme-toggle";
 import { fa, site } from "@/content/fa";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { SECTION_IDS } from "@/lib/sections";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +33,14 @@ const LINKS = [
 /** Pixels scrolled before the bar becomes a floating pill. */
 const SCROLL_THRESHOLD = 24;
 
+/** Snappy but not bouncy: the active pill should arrive, not wobble. */
+const ACTIVE_SPRING = {
+  type: "spring" as const,
+  stiffness: 420,
+  damping: 34,
+  mass: 0.7,
+};
+
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState<string | null>(null);
@@ -45,6 +55,8 @@ export function Navbar() {
   const [travelY, setTravelY] = useState(0);
   const [docked, setDocked] = useState(false);
   const [restTop, setRestTop] = useState<number | null>(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const activeTransition = prefersReducedMotion ? { duration: 0 } : ACTIVE_SPRING;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > SCROLL_THRESHOLD);
@@ -287,17 +299,35 @@ export function Navbar() {
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
                 )}
               >
-                {/* Active indicator: a single cyan dot, not an underline. */}
-                <span
-                  aria-hidden
-                  className={cn(
-                    // Physical centering (left + negative shift) so the dot
-                    // stays centered regardless of document direction.
-                    "bg-primary absolute top-1 left-1/2 size-1 -translate-x-1/2 rounded-full shadow-[0_0_8px_var(--primary)] transition-opacity",
-                    isActive ? "opacity-100" : "opacity-0",
-                  )}
-                />
-                {label}
+                {/*
+                 * Active pill: one shared layout element, so the surface
+                 * travels between links with a spring instead of blinking.
+                 * Rendered only after the observer picks a section — the
+                 * server and first client paint agree on no indicator.
+                 */}
+                {isActive && (
+                  <motion.span
+                    aria-hidden
+                    layoutId="nav-active-desktop"
+                    transition={activeTransition}
+                    className="border-primary/25 bg-primary/10 shadow-[0_0_18px_-8px_var(--primary)] absolute inset-0 rounded-full border"
+                  >
+                    <span className="via-primary/50 absolute inset-x-3 bottom-0 h-px bg-linear-to-r from-transparent to-transparent" />
+                  </motion.span>
+                )}
+                <span className="relative z-10 flex items-center gap-1.5">
+                  {/* Always occupies its slot, so the label never shifts. */}
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "bg-primary size-1.5 rounded-full transition-opacity duration-300",
+                      isActive
+                        ? "shadow-[0_0_8px_var(--primary)] opacity-100"
+                        : "opacity-0",
+                    )}
+                  />
+                  {label}
+                </span>
               </Link>
             );
           })}
@@ -370,13 +400,32 @@ export function Navbar() {
                   onClick={() => setMenuOpen(false)}
                   aria-current={isActive ? "location" : undefined}
                   className={cn(
-                    "focus-visible:ring-ring block rounded-xl px-4 py-2.5 text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none",
+                    "focus-visible:ring-ring relative block rounded-xl px-4 py-2.5 text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none",
                     isActive
-                      ? "text-foreground bg-muted/60"
+                      ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
                   )}
                 >
-                  {label}
+                  {isActive && (
+                    <motion.span
+                      aria-hidden
+                      layoutId="nav-active-mobile"
+                      transition={activeTransition}
+                      className="border-primary/25 bg-primary/10 absolute inset-0 rounded-xl border"
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center gap-2">
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "bg-primary size-1.5 rounded-full transition-opacity duration-300",
+                        isActive
+                          ? "shadow-[0_0_8px_var(--primary)] opacity-100"
+                          : "opacity-0",
+                      )}
+                    />
+                    {label}
+                  </span>
                 </Link>
               );
             })}
@@ -410,13 +459,32 @@ export function Navbar() {
                   href={href}
                   aria-current={isActive ? "location" : undefined}
                   className={cn(
-                    "focus-visible:ring-ring rounded-full px-3 py-1.5 text-[13px] whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:outline-none",
+                    "focus-visible:ring-ring relative rounded-full px-3 py-1.5 text-[13px] whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:outline-none",
                     isActive
-                      ? "text-foreground bg-muted/60"
+                      ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
                   )}
                 >
-                  {label}
+                  {isActive && (
+                    <motion.span
+                      aria-hidden
+                      layoutId="nav-active-docked"
+                      transition={activeTransition}
+                      className="border-primary/25 bg-primary/10 absolute inset-0 rounded-full border"
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center gap-1.5">
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "bg-primary size-1.5 rounded-full transition-opacity duration-300",
+                        isActive
+                          ? "shadow-[0_0_8px_var(--primary)] opacity-100"
+                          : "opacity-0",
+                      )}
+                    />
+                    {label}
+                  </span>
                 </Link>
               );
             })}

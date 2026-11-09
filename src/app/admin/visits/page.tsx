@@ -42,6 +42,8 @@ function parsePage(raw: string | undefined): number {
   return Number.isFinite(n) && n > 0 ? n : 1;
 }
 
+export const instant = false;
+
 /**
  * Sessions — one row per *visit*, not per page.
  *

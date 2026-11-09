@@ -13,6 +13,8 @@ export const metadata = { title: fa.admin.visitsTabIps };
 
 type SearchParams = Promise<{ scope?: string }>;
 
+export const instant = false;
+
 /**
  * Addresses, not people: which networks visited, how often, and how many
  * distinct visitors came out of each.

@@ -6,6 +6,8 @@ import { listJokes } from "@/lib/db/jokes";
 
 export const metadata = { title: fa.admin.jokes };
 
+export const instant = false;
+
 export default async function AdminJokesPage() {
   await requireAdmin();
   const jokes = await listJokes();

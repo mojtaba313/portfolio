@@ -20,6 +20,8 @@ import { formatDuration } from "@/lib/format-date";
 
 export const metadata = { title: fa.admin.sessionDetail };
 
+export const instant = false;
+
 /**
  * One visit, in full: who, from where, what they walked through, and how long
  * each page held them. The dwell timeline is the behavioural payload — the

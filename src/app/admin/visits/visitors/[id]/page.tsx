@@ -17,6 +17,8 @@ import { formatJalaliDateTime } from "@/lib/format-date";
 
 export const metadata = { title: fa.admin.visitorHistory };
 
+export const instant = false;
+
 /**
  * One identity's whole story, oldest session at the bottom: every visit they
  * ever made, with the pages each one walked. This is the page that answers
